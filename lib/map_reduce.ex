@@ -46,17 +46,17 @@ defmodule MapReduce do
     mapper_pids
   end
 
-  defp spawn_mappers(list = [h | t], mapper_pids) do
+  defp spawn_mappers(_list = [h | t], mapper_pids) do
     mapper_pid = elem(Mapper.start_link(), 1)
     raw_array = h
     send(mapper_pid, {:set_raw_array, raw_array})
     spawn_mappers(t, [mapper_pid | mapper_pids])
   end
 
-  def set_map_reduce(map_lambda, reduce_lambda, []) do
+  def set_map_reduce(_map_lambda, _reduce_lambda, []) do
   end
 
-  def set_map_reduce(map_lambda, reduce_lambda, remaining_pids = [h | t]) do
+  def set_map_reduce(map_lambda, reduce_lambda, _remaining_pids = [h | t]) do
     send(h, {:set_map_reduce, map_lambda, reduce_lambda})
     set_map_reduce(map_lambda, reduce_lambda, t)
   end
@@ -64,14 +64,8 @@ defmodule MapReduce do
   def send_calc_command([]) do
   end
 
-  def send_calc_command(remaining_pids = [h | t]) do
+  def send_calc_command(_remaining_pids = [h | t]) do
     send(h, {:calc, self()})
     send_calc_command(t)
   end
-
-  defp list_to_string(list) do
-    Enum.join(list, ", ")
-  end
-
-
 end
