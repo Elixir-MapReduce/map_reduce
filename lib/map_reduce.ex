@@ -2,24 +2,24 @@ defmodule MapReduce do
   require Mapper
   require ProblemDomains
 
-  def main(args) do
+  def main(_args) do
     :hello
   end
 
   def main() do
-    pid = elem(Mapper.start_link(), 1)
+    mapper_pid = elem(Mapper.start_link(), 1)
 
     raw_array = [1, 4, 5, 6, 7]
 
-    pid_domains = elem(ProblemDomains.start_link(), 1)
+    domains_pid = elem(ProblemDomains.start_link(), 1)
 
-    send(pid_domains, {:two_x_plus1, self()})
+    send(domains_pid, {:two_x_plus1, self()})
 
     receive do
-      {map, reduce} -> send(pid, {:set_map_reduce, map, reduce})
+      {map, reduce} -> send(mapper_pid, {:set_map_reduce, map, reduce})
     end
 
-    send(pid, {:set_raw_array, [1, 4, 5, 6, 7]})
-    send(pid, {:calc})
+    send(mapper_pid, {:set_raw_array, raw_array})
+    send(mapper_pid, {:calc})
   end
 end
