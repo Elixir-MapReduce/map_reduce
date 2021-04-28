@@ -9,7 +9,7 @@ defmodule Partitioner do
     end
   end
 
-  defp partition(list, parts_count) do
+  def partition(list, parts_count) do
     Enum.chunk_every(list, ceil(length(list) / parts_count))
   end
 end

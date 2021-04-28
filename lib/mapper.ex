@@ -9,17 +9,18 @@ defmodule Mapper do
     receive do
       {:add_raw_element, value} -> loop(map_lambda, [value | raw], reduce_lambda)
       {:set_raw_array, values} -> loop(map_lambda, values, reduce_lambda)
-      {:calc} -> apply_map_reduce(map_lambda, raw, reduce_lambda)
+      {:calc, pid} -> apply_map_reduce(map_lambda, raw, reduce_lambda, pid)
       {:set_map_reduce, map_lambda, reduce_lambda} -> loop(map_lambda, raw, reduce_lambda)
     end
   end
 
-  defp apply_map_reduce(map_lambda, raw, reduce_lambda) do
-    IO.puts("raw list:  #{list_to_string(raw)}")
+  defp apply_map_reduce(map_lambda, raw, reduce_lambda, pid) do
+    # IO.puts("raw list:  #{list_to_string(raw)}")
     result = apply_map(map_lambda, raw, [])
-    IO.puts("result before reduce: #{list_to_string(result)}")
+    # IO.puts("result before reduce: #{list_to_string(result)}")
     final_result = Reducer.reduce(result, reduce_lambda)
-    IO.puts("final result: #{final_result}")
+    # IO.puts("final result: #{final_result}")
+    send(pid, {:result, final_result})
   end
 
   defp apply_map(_map_lambda, [], result) do
