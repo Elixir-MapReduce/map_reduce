@@ -16,16 +16,14 @@ defmodule Mapper do
 
   defp apply_map_reduce(map_lambda, raw, reduce_lambda) do
     IO.puts("raw list:  #{list_to_string(raw)}")
-    reversed_result = apply_map(map_lambda, raw, [])
-    result = reversed_result |> Enum.reverse()
+    result = apply_map(map_lambda, raw, [])
     IO.puts("result before reduce: #{list_to_string(result)}")
     final_result = Reducer.reduce(result, reduce_lambda)
     IO.puts("final result: #{final_result}")
   end
 
   defp apply_map(_map_lambda, [], result) do
-    # reversed
-    result
+    result |> Enum.reverse()
   end
 
   defp apply_map(map_lambda, [h | t], result) do
