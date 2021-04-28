@@ -10,20 +10,18 @@ defmodule MapReduce do
   def main() do
     domains_pid = elem(ProblemDomains.start_link(), 1)
 
-
-    mapper_pids = spawn_mappers(Enum.to_list(1..1000000) |>  Partitioner.partition(100000))
+    mapper_pids = spawn_mappers(Enum.to_list(1..1_000_000) |> Partitioner.partition(100_000))
 
     IO.inspect(mapper_pids)
 
     # send(domains_pid, {:two_times_plus_1_sum, self()})
     send(domains_pid, {:identity_sum, self()})
+
     receive do
       {map, reduce} -> set_map_reduce(map, reduce, mapper_pids)
     end
 
-
     send_calc_command(mapper_pids)
-
 
     gather_loop(length(mapper_pids), 0)
   end
@@ -34,7 +32,7 @@ defmodule MapReduce do
 
   defp gather_loop(remaining_responses, current_result) do
     receive do
-      {:result, result} -> gather_loop(remaining_responses - 1 , current_result + result)
+      {:result, result} -> gather_loop(remaining_responses - 1, current_result + result)
     end
   end
 
