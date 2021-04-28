@@ -15,8 +15,8 @@ defmodule MapReduce do
 
     IO.inspect(mapper_pids)
 
-    # send(domains_pid, {:two_x_plus1, self()})
-    send(domains_pid, {:identity, self()})
+    # send(domains_pid, {:two_times_plus_1_sum, self()})
+    send(domains_pid, {:identity_sum, self()})
     receive do
       {map, reduce} -> set_map_reduce(map, reduce, mapper_pids)
     end
