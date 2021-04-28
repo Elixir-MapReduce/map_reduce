@@ -15,10 +15,10 @@ defmodule Mapper do
 	end
 
 	defp apply_map_reduce(map_lambda, raw, reduce_lambda) do
-		IO.puts(["raw list is ", Enum.join(raw, ",")])                             
+		IO.puts("raw list:  #{list_to_string(raw)}")                             
 		reversed_result = apply_map(map_lambda, raw, [])
 		result = reversed_result |> Enum.reverse
-		IO.puts(["result before reduce: ", Enum.join(result, ",")])
+		IO.puts("result before reduce: #{list_to_string(result)}")
 		final_result = Reducer.reduce(result, reduce_lambda)
 		IO.puts("final result: #{final_result}")
 	end
@@ -29,5 +29,9 @@ defmodule Mapper do
 
 	defp apply_map(map_lambda, [h | t], result) do
 		apply_map(map_lambda, t , [map_lambda.(h) | result])		
+	end
+
+	defp list_to_string(list) do
+		Enum.join(list, ", ")
 	end
 end
