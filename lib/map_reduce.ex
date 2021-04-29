@@ -2,36 +2,54 @@ defmodule MapReduce do
   require ProblemDomains
   require Partitioner
   require Solver
+  require Randomizer
 
   def main(_args) do # not implemented yet
     :hello
   end
 
+
   def main() do
-    partition_count = 100_000
+    problem_domain = :word_count
+    # problem_domain = :identity_sum
+
+
+    partition_count = 1000
 
     domains_pid = elem(ProblemDomains.start_link(), 1)
-    solver_pids = spawn_solvers(Enum.to_list(1..1_000_000) |> Partitioner.partition(partition_count))
+
+    
+
+    # solver_pids = spawn_solvers(Enum.to_list(1..1_000_000) |> Partitioner.partition(partition_count))
+    
+    word_random_collection = Randomizer.randomizer(1, 10000)
+    solver_pids = spawn_solvers(word_random_collection |> Partitioner.partition(partition_count))
 
     IO.inspect(solver_pids)
 
-    send(domains_pid, {:identity_sum, self()})
+    send(domains_pid, {problem_domain, self()})
+
+    accum = ProblemDomains.get_init_accum(problem_domain)
+    merger = ProblemDomains.merger(problem_domain)
+
     receive do
       {map, reduce} -> set_map_reduce(map, reduce, solver_pids)
+      {map, reduce, init_accum} -> set_map_reduce(map, reduce, solver_pids, init_accum)
     end
 
     send_calc_command(solver_pids)
 
-    gather_loop(length(solver_pids), 0)
+    IO.inspect(accum)
+    gather_loop(length(solver_pids), accum, merger)
   end
 
-  defp gather_loop(0, current_result) do
+  defp gather_loop(0, current_result, _merger) do
     current_result
   end
 
-  defp gather_loop(remaining_responses, current_result) do
+  defp gather_loop(remaining_responses, current_result, merger) do
     receive do
-      {:result, result} -> gather_loop(remaining_responses - 1, current_result + result)
+      {:result, result} -> gather_loop(remaining_responses - 1, merger.(current_result, result), merger)
     end
   end
 
@@ -49,12 +67,18 @@ defmodule MapReduce do
     spawn_solvers(t, [solver_pid | solver_pids])
   end
 
-  def set_map_reduce(_map_lambda, _reduce_lambda, []) do
+  def set_map_reduce(_map_lambda, _reduce_lambda, [], _accum) do
   end
 
-  def set_map_reduce(map_lambda, reduce_lambda, _remaining_pids = [h | t]) do
+  def set_map_reduce(map_lambda, reduce_lambda, remaining_pids) do
+    set_map_reduce(map_lambda, reduce_lambda, remaining_pids, 0)
+  end
+
+
+  def set_map_reduce(map_lambda, reduce_lambda, _remaining_pids = [h | t], init_accum) do
     send(h, {:set_map_reduce, map_lambda, reduce_lambda})
-    set_map_reduce(map_lambda, reduce_lambda, t)
+    send(h, {:set_init_accum, init_accum})
+    set_map_reduce(map_lambda, reduce_lambda, t, init_accum)
   end
 
   def send_calc_command([]) do
