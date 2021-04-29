@@ -4,24 +4,21 @@ defmodule MapReduce do
   require Solver
   require Randomizer
 
-  def main(_args) do # not implemented yet
+  # not implemented yet
+  def main(_args) do
     :hello
   end
-
 
   def main() do
     problem_domain = :word_count
     # problem_domain = :identity_sum
 
-
     partition_count = 1000
 
     domains_pid = elem(ProblemDomains.start_link(), 1)
 
-    
-
     # solver_pids = spawn_solvers(Enum.to_list(1..1_000_000) |> Partitioner.partition(partition_count))
-    
+
     word_random_collection = Randomizer.randomizer(1, 10000)
     solver_pids = spawn_solvers(word_random_collection |> Partitioner.partition(partition_count))
 
@@ -49,7 +46,8 @@ defmodule MapReduce do
 
   defp gather_loop(remaining_responses, current_result, merger) do
     receive do
-      {:result, result} -> gather_loop(remaining_responses - 1, merger.(current_result, result), merger)
+      {:result, result} ->
+        gather_loop(remaining_responses - 1, merger.(current_result, result), merger)
     end
   end
 
@@ -73,7 +71,6 @@ defmodule MapReduce do
   def set_map_reduce(map_lambda, reduce_lambda, remaining_pids) do
     set_map_reduce(map_lambda, reduce_lambda, remaining_pids, 0)
   end
-
 
   def set_map_reduce(map_lambda, reduce_lambda, _remaining_pids = [h | t], init_accum) do
     send(h, {:set_map_reduce, map_lambda, reduce_lambda})

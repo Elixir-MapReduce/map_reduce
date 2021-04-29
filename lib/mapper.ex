@@ -2,7 +2,7 @@ defmodule Mapper do
   def apply_map(map_lambda, list) do
     apply_map(map_lambda, list, [])
   end
-  
+
   defp apply_map(_map_lambda, [], result) do
     result |> Enum.reverse()
   end
