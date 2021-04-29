@@ -22,8 +22,6 @@ defmodule MapReduce do
     word_random_collection = Randomizer.randomizer(1, 10000)
     solver_pids = spawn_solvers(word_random_collection |> Partitioner.partition(partition_count))
 
-    IO.inspect(solver_pids)
-
     send(domains_pid, {problem_domain, self()})
 
     accum = ProblemDomains.get_init_accum(problem_domain)
@@ -65,11 +63,11 @@ defmodule MapReduce do
     spawn_solvers(t, [solver_pid | solver_pids])
   end
 
-  def set_map_reduce(_map_lambda, _reduce_lambda, [], _accum) do
-  end
-
   def set_map_reduce(map_lambda, reduce_lambda, remaining_pids) do
     set_map_reduce(map_lambda, reduce_lambda, remaining_pids, 0)
+  end
+
+  def set_map_reduce(_map_lambda, _reduce_lambda, [], _accum) do
   end
 
   def set_map_reduce(map_lambda, reduce_lambda, _remaining_pids = [h | t], init_accum) do
