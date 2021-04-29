@@ -1,4 +1,6 @@
 defmodule ProblemDomains do
+  require Randomizer
+
   def start_link do
     Task.start_link(fn -> loop() end)
   end
@@ -44,5 +46,13 @@ defmodule ProblemDomains do
 
   def merger(:identity_sum) do
     &(&1 + &2)
+  end
+
+  def get_enum(:identity_sum) do
+    Enum.to_list(1..10_000_000)
+  end
+
+  def get_enum(:word_count, process_count \\ 1_000_000) do
+    Randomizer.randomizer(3, 100_000) |> Partitioner.partition(process_count)
   end
 end

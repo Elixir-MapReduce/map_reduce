@@ -14,15 +14,14 @@ defmodule MapReduce do
     # problem_domain = :identity_sum
 
     partition_count = 100_000
-    words_count = 100_000
 
     domains_pid = elem(ProblemDomains.start_link(), 1)
 
-    # solver_pids = spawn_solvers(Enum.to_list(1..1_000_000) |> Partitioner.partition(partition_count))
+    collection = ProblemDomains.get_enum(problem_domain)
 
-    # TODO: distribute on multiple processes
-    word_random_collection = Randomizer.randomizer(3, words_count)
-    solver_pids = spawn_solvers(word_random_collection |> Partitioner.partition(partition_count))
+    solver_pids = spawn_solvers(collection |> Partitioner.partition(partition_count))
+
+    start_time = :os.system_time(:millisecond)
 
     send(domains_pid, {problem_domain, self()})
 
@@ -36,7 +35,9 @@ defmodule MapReduce do
 
     send_calc_command(solver_pids)
 
-    gather_loop(length(solver_pids), accum, merger)
+    IO.inspect(gather_loop(length(solver_pids), accum, merger))
+    end_time = :os.system_time(:millisecond)
+    IO.puts("processing time: #{end_time - start_time} ms")
   end
 
   defp gather_loop(0, current_result, _merger) do
