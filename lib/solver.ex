@@ -16,8 +16,6 @@ defmodule Solver do
   end
 
   defp solve(map_lambda, raw, reduce_lambda, pid) do
-    map_result = Mapper.apply_map(map_lambda, raw)
-    reduce_result = Reducer.reduce(map_result, reduce_lambda)
-    send(pid, {:result, reduce_result})
+    send(pid, {:result, Mapper.apply_map(map_lambda, raw) |> Reducer.reduce(reduce_lambda)})
   end
 end
