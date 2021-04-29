@@ -3,13 +3,12 @@ defmodule MapReduce do
   require Partitioner
   require Solver
 
-  def main(_args) do
+  def main(_args) do # not implemented yet
     :hello
   end
 
   def main() do
     partition_count = 100_000
-
 
     domains_pid = elem(ProblemDomains.start_link(), 1)
     solver_pids = spawn_solvers(Enum.to_list(1..1_000_000) |> Partitioner.partition(partition_count))
@@ -17,7 +16,6 @@ defmodule MapReduce do
     IO.inspect(solver_pids)
 
     send(domains_pid, {:identity_sum, self()})
-
     receive do
       {map, reduce} -> set_map_reduce(map, reduce, solver_pids)
     end
@@ -47,8 +45,7 @@ defmodule MapReduce do
 
   defp spawn_solvers(_list = [h | t], solver_pids) do
     solver_pid = elem(Solver.start_link(), 1)
-    raw_array = h
-    send(solver_pid, {:set_raw_array, raw_array})
+    send(solver_pid, {:set_raw_array, h})
     spawn_solvers(t, [solver_pid | solver_pids])
   end
 
