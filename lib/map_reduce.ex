@@ -13,13 +13,13 @@ defmodule MapReduce do
     problem_domain = :word_count
     # problem_domain = :identity_sum
 
-    partition_count = 1000
+    partition_count = 100_000
 
     domains_pid = elem(ProblemDomains.start_link(), 1)
 
     # solver_pids = spawn_solvers(Enum.to_list(1..1_000_000) |> Partitioner.partition(partition_count))
 
-    word_random_collection = Randomizer.randomizer(1, 10000)
+    word_random_collection = Randomizer.randomizer(3, partition_count)
     solver_pids = spawn_solvers(word_random_collection |> Partitioner.partition(partition_count))
 
     send(domains_pid, {problem_domain, self()})
@@ -34,7 +34,6 @@ defmodule MapReduce do
 
     send_calc_command(solver_pids)
 
-    IO.inspect(accum)
     gather_loop(length(solver_pids), accum, merger)
   end
 
