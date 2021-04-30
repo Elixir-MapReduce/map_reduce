@@ -10,7 +10,8 @@ defmodule ProblemDomains do
   end
 
   def dict_reducer(map, c) when is_map(c) do
-    [{key, value}] = Enum.take_random(c, 1)
+    [key | _t] = Map.keys(c)
+    value = Map.get(c, key)
 
     dict_reducer(
       Map.update(map, key, value, fn prev_count -> prev_count + value end),
