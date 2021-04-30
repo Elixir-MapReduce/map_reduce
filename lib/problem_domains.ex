@@ -50,7 +50,6 @@ defmodule ProblemDomains do
   end
 
   def get_sample_list(:identity_sum) do
-    # Enum.to_list(1..10_000_000)
     1..10_000_000
   end
 
