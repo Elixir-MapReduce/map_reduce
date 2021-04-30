@@ -48,11 +48,12 @@ defmodule ProblemDomains do
     &(&1 + &2)
   end
 
-  def get_enum(:identity_sum) do
-    Enum.to_list(1..10_000_000)
+  def get_sample_list(:identity_sum) do
+    # Enum.to_list(1..10_000_000)
+    1..10_000_000
   end
 
-  def get_enum(:word_count, process_count \\ 1_000_000) do
+  def get_sample_list(:word_count, process_count \\ 1_000_000) do
     Randomizer.randomizer(3, 100_000) |> Partitioner.partition(process_count)
   end
 end

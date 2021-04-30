@@ -11,7 +11,7 @@ defmodule MapReduce do
 
   def main(problem_domain, process_count, collection) do
     start_time = :os.system_time(:millisecond)
-    
+
     domains_pid = elem(ProblemDomains.start_link(), 1)
     solver_pids = spawn_solvers(collection |> Partitioner.partition(process_count))
 
@@ -34,7 +34,7 @@ defmodule MapReduce do
   end
 
   def main(problem_domain) do
-    main(problem_domain, 100_000, ProblemDomains.get_enum(problem_domain))
+    main(problem_domain, 100_000, ProblemDomains.get_sample_list(problem_domain))
   end
 
   defp gather_loop(0, current_result, _merger) do
