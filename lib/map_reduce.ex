@@ -5,23 +5,15 @@ defmodule MapReduce do
   require Randomizer
 
   # not implemented yet
-  def main(_args) do
-    :hello
+  def main() do
+    main(:word_count)
   end
 
-  def main() do
-    problem_domain = :word_count
-    # problem_domain = :identity_sum
-
-    partition_count = 100_000
-
-    domains_pid = elem(ProblemDomains.start_link(), 1)
-
-    collection = ProblemDomains.get_enum(problem_domain)
-
-    solver_pids = spawn_solvers(collection |> Partitioner.partition(partition_count))
-
+  def main(problem_domain, process_count, collection) do
     start_time = :os.system_time(:millisecond)
+    
+    domains_pid = elem(ProblemDomains.start_link(), 1)
+    solver_pids = spawn_solvers(collection |> Partitioner.partition(process_count))
 
     send(domains_pid, {problem_domain, self()})
 
@@ -35,9 +27,14 @@ defmodule MapReduce do
 
     send_calc_command(solver_pids)
 
-    IO.inspect(gather_loop(length(solver_pids), accum, merger))
+    result = gather_loop(length(solver_pids), accum, merger)
     end_time = :os.system_time(:millisecond)
     IO.puts("processing time: #{end_time - start_time} ms")
+    result
+  end
+
+  def main(problem_domain) do
+    main(problem_domain, 100_000, ProblemDomains.get_enum(problem_domain))
   end
 
   defp gather_loop(0, current_result, _merger) do
