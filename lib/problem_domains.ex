@@ -54,7 +54,7 @@ defmodule ProblemDomains do
     1..10_000_000
   end
 
-  def get_sample_list(:word_count, process_count \\ 1_000_000) do
-    Randomizer.randomizer(3, 100_000) |> Partitioner.partition(process_count)
+  def get_sample_list(:word_count) do
+    Randomizer.randomizer(3, 1_000_000)
   end
 end
