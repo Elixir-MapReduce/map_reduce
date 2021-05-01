@@ -10,8 +10,6 @@ defmodule MapReduce do
   end
 
   def main(collection, map_lambda, reduce_lambda, acc, process_count \\ 10_000) do
-    start_time = :os.system_time(:millisecond)
-
     solver_pids = spawn_solvers(collection |> Partitioner.partition(process_count))
 
     accum = acc
@@ -22,15 +20,10 @@ defmodule MapReduce do
     send_calc_command(solver_pids)
 
     result = gather_loop(length(solver_pids), accum, merger)
-    end_time = :os.system_time(:millisecond)
-    # IO.puts("processing time: #{end_time - start_time} ms")
-    # Appsignal.set_gauge("response_time", end_time - start_time)
     result
   end
 
   def main(problem_domain, process_count, collection) do
-    start_time = :os.system_time(:millisecond)
-
     domains_pid = elem(ProblemDomains.start_link(), 1)
     solver_pids = spawn_solvers(collection |> Partitioner.partition(process_count))
 
@@ -47,9 +40,6 @@ defmodule MapReduce do
     send_calc_command(solver_pids)
 
     result = gather_loop(length(solver_pids), accum, merger)
-    end_time = :os.system_time(:millisecond)
-    # IO.puts("processing time: #{end_time - start_time} ms")
-    # Appsignal.set_gauge("response_time", end_time - start_time)
     result
   end
 
