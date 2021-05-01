@@ -33,4 +33,11 @@ defmodule MapReduceTest do
 
     assert(result_count == total_word_count)
   end
+
+  test "user_defined_map_reduce" do
+    mapper = & &1
+    reducer = &(&1 + &2)
+    acc = 0
+    assert([1, 4, 5, 6, 3] |> MapReduce.main(mapper, reducer, acc) == 19)
+  end
 end
