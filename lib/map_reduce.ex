@@ -10,14 +10,14 @@ defmodule MapReduce do
   end
 
   def main(collection, map_lambda, reduce_lambda, acc, process_count \\ 10_000) do
-    solver_pids = spawn_solvers(collection |> Partitioner.partition(process_count))
+    solver_pids = Enum.map(collection |> Partitioner.partition(process_count), &spawn_solver/1)
 
     accum = acc
     reduce = reduce_lambda
 
     set_map_reduce(map_lambda, reduce_lambda, solver_pids, acc)
 
-    send_calc_command(solver_pids)
+    Enum.each(solver_pids, &send_calc_command/1)
 
     result = gather_loop(length(solver_pids), accum, reduce)
     result
@@ -25,7 +25,7 @@ defmodule MapReduce do
 
   def main(problem_domain, process_count, collection) do
     domains_pid = elem(GenServer.start(ProblemDomains, []), 1)
-    solver_pids = spawn_solvers(collection |> Partitioner.partition(process_count))
+    solver_pids = Enum.map(collection |> Partitioner.partition(process_count), &spawn_solver/1)
 
     accum = GenServer.call(domains_pid, {:get_init_acc, problem_domain})
     reduce = GenServer.call(domains_pid, {:get_reduce, problem_domain})
@@ -35,7 +35,7 @@ defmodule MapReduce do
       {map, reduce, init_acc} -> set_map_reduce(map, reduce, solver_pids, init_acc)
     end
 
-    send_calc_command(solver_pids)
+    Enum.each(solver_pids, &send_calc_command/1)
 
     result = gather_loop(length(solver_pids), accum, reduce)
     result
@@ -56,18 +56,10 @@ defmodule MapReduce do
     end
   end
 
-  defp spawn_solvers(list) do
-    spawn_solvers(list, [])
-  end
-
-  defp spawn_solvers([], solver_pids) do
-    solver_pids
-  end
-
-  defp spawn_solvers(_list = [h | t], solver_pids) do
+  def spawn_solver(collection) do
     solver_pid = elem(GenServer.start(Solver, []), 1)
-    GenServer.cast(solver_pid, {:set_elements, h})
-    spawn_solvers(t, [solver_pid | solver_pids])
+    GenServer.cast(solver_pid, {:set_elements, collection})
+    solver_pid
   end
 
   def set_map_reduce(map_lambda, reduce_lambda, remaining_pids) do
@@ -83,11 +75,7 @@ defmodule MapReduce do
     set_map_reduce(map_lambda, reduce_lambda, t, init_accum)
   end
 
-  def send_calc_command([]) do
-  end
-
-  def send_calc_command(_remaining_pids = [h | t]) do
-    GenServer.cast(h, {:calc, self()})
-    send_calc_command(t)
+  def send_calc_command(solver_pid) do
+    GenServer.cast(solver_pid, {:calc, self()})
   end
 end
