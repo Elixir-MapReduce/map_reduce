@@ -1,4 +1,4 @@
-defmodule ProblemDomains do
+defmodule SampleDomains do
   require Randomizer
   use GenServer
 

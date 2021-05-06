@@ -1,5 +1,5 @@
 defmodule MapReduce do
-  require ProblemDomains
+  require SampleDomains
   require Partitioner
   require Solver
   require Randomizer
@@ -10,7 +10,7 @@ defmodule MapReduce do
   end
 
   def solve(problem_domain, process_count, collection) when is_atom(problem_domain) do
-    domains_pid = elem(GenServer.start(ProblemDomains, []), 1)
+    domains_pid = elem(GenServer.start(SampleDomains, []), 1)
 
     case GenServer.call(domains_pid, {problem_domain, self()}) do
       {map, reduce} -> solve(collection, map, reduce, process_count)
@@ -35,7 +35,7 @@ defmodule MapReduce do
   end
 
   def solve(problem_domain) do
-    domains_pid = elem(GenServer.start(ProblemDomains, []), 1)
+    domains_pid = elem(GenServer.start(SampleDomains, []), 1)
 
     solve(
       problem_domain,
