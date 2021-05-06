@@ -61,6 +61,6 @@ defmodule ProblemDomains do
   end
 
   def handle_call({:get_sample_list, :word_count}, _from, _state) do
-    {:reply, Randomizer.randomizer(3, 1_000_000), %{}}
+    {:reply, Randomizer.randomizer(3, 1_000), %{}}
   end
 end

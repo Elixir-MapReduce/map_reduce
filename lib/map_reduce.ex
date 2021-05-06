@@ -42,7 +42,13 @@ defmodule MapReduce do
   end
 
   def main(problem_domain) do
-    main(problem_domain, 100_000, GenServer.call(problem_domain, {:get_sample_list}))
+    domains_pid = elem(GenServer.start(ProblemDomains, []), 1)
+
+    main(
+      problem_domain,
+      100_000,
+      GenServer.call(domains_pid, {:get_sample_list, problem_domain}, 10000)
+    )
   end
 
   defp gather_loop(0, current_result, _reduce) do
