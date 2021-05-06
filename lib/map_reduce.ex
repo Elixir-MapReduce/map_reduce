@@ -26,7 +26,9 @@ defmodule MapReduce do
 
     reduce = reduce_lambda
 
-    set_map_reduce(map_lambda, reduce_lambda, solver_pids)
+    Enum.each(solver_pids, fn solver_pid ->
+      GenServer.cast(solver_pid, {:set_map_reduce, map_lambda, reduce_lambda})
+    end)
 
     Enum.each(solver_pids, &send_calc_command/1)
 
@@ -66,14 +68,6 @@ defmodule MapReduce do
     solver_pid = elem(GenServer.start(Solver, []), 1)
     GenServer.cast(solver_pid, {:set_elements, collection})
     solver_pid
-  end
-
-  def set_map_reduce(_map_lambda, _reduce_lambda, []) do
-  end
-
-  def set_map_reduce(map_lambda, reduce_lambda, _remaining_pids = [h | t]) do
-    GenServer.cast(h, {:set_map_reduce, map_lambda, reduce_lambda})
-    set_map_reduce(map_lambda, reduce_lambda, t)
   end
 
   def send_calc_command(solver_pid) do
