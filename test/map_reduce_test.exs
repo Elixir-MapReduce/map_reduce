@@ -37,7 +37,6 @@ defmodule MapReduceTest do
   test "user_defined_map_reduce" do
     mapper = & &1
     reducer = &(&1 + &2)
-    acc = 0
-    assert([1, 4, 5, 6, 3] |> MapReduce.solve(mapper, reducer, acc) == 19)
+    assert([1, 4, 5, 6, 3] |> MapReduce.solve(mapper, reducer) == 19)
   end
 end

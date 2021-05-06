@@ -15,16 +15,15 @@ For example if you want to calculate the sum of elements of a list, here's what 
 ```elixir
 mapper = fn (x) -> x end
 reducer = fn (x, y) -> x + y end
-acc = 0 # acc is the answer for the problem when the list is empty (here, sum of elements of an empty list is 0)
 ```
 
 Then you can use the MapReduce module to calculate the ansewr for your desired list:
 ```elixir
 list = [1,4,5,6,3] # you can change this
-MapReduce.solve(list, mapper, reducer, acc) # you should get 19 here
+MapReduce.solve(list, mapper, reducer) # you should get 19 here
 ```
 
-Note that here we used anonymous functions, you can use normal functions but you have to use the syntax `MapReduce.solve(list, &mapper, &reducer, acc)` in that case
+Note that here we used anonymous functions, you can use normal functions but you have to use the syntax `MapReduce.solve(list, &mapper, &reducer)` in that case
 
 ## License
 

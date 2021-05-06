@@ -9,35 +9,28 @@ defmodule MapReduce do
     solve(:word_count)
   end
 
-  def solve(collection, map_lambda, reduce_lambda, acc, process_count \\ 10_000) do
-    solver_pids = Enum.map(collection |> Partitioner.partition(process_count), &spawn_solver/1)
-
-    accum = acc
-    reduce = reduce_lambda
-
-    set_map_reduce(map_lambda, reduce_lambda, solver_pids, acc)
-
-    Enum.each(solver_pids, &send_calc_command/1)
-
-    result = gather_loop(length(solver_pids), accum, reduce)
-    result
-  end
-
-  def solve(problem_domain, process_count, collection) do
+  def solve(problem_domain, process_count, collection) when is_atom(problem_domain) do
     domains_pid = elem(GenServer.start(ProblemDomains, []), 1)
-    solver_pids = Enum.map(collection |> Partitioner.partition(process_count), &spawn_solver/1)
-
-    accum = GenServer.call(domains_pid, {:get_init_acc, problem_domain})
-    reduce = GenServer.call(domains_pid, {:get_reduce, problem_domain})
 
     case GenServer.call(domains_pid, {problem_domain, self()}) do
-      {map, reduce} -> set_map_reduce(map, reduce, solver_pids)
-      {map, reduce, init_acc} -> set_map_reduce(map, reduce, solver_pids, init_acc)
+      {map, reduce} -> solve(collection, map, reduce, process_count)
     end
+  end
+
+  def solve(collection, map_lambda, reduce_lambda) do
+    solve(collection, map_lambda, reduce_lambda, 10_000)
+  end
+
+  def solve(collection, map_lambda, reduce_lambda, process_count) do
+    solver_pids = Enum.map(collection |> Partitioner.partition(process_count), &spawn_solver/1)
+
+    reduce = reduce_lambda
+
+    set_map_reduce(map_lambda, reduce_lambda, solver_pids)
 
     Enum.each(solver_pids, &send_calc_command/1)
 
-    result = gather_loop(length(solver_pids), accum, reduce)
+    result = gather_loop(length(solver_pids), reduce)
     result
   end
 
@@ -49,6 +42,13 @@ defmodule MapReduce do
       100_000,
       GenServer.call(domains_pid, {:get_sample_list, problem_domain}, 10000)
     )
+  end
+
+  defp gather_loop(remaining_pids, reduce) do
+    receive do
+      {:result, result} ->
+        gather_loop(remaining_pids - 1, result, reduce)
+    end
   end
 
   defp gather_loop(0, current_result, _reduce) do
@@ -68,17 +68,12 @@ defmodule MapReduce do
     solver_pid
   end
 
-  def set_map_reduce(map_lambda, reduce_lambda, remaining_pids) do
-    set_map_reduce(map_lambda, reduce_lambda, remaining_pids, 0)
+  def set_map_reduce(_map_lambda, _reduce_lambda, []) do
   end
 
-  def set_map_reduce(_map_lambda, _reduce_lambda, [], _accum) do
-  end
-
-  def set_map_reduce(map_lambda, reduce_lambda, _remaining_pids = [h | t], init_accum) do
+  def set_map_reduce(map_lambda, reduce_lambda, _remaining_pids = [h | t]) do
     GenServer.cast(h, {:set_map_reduce, map_lambda, reduce_lambda})
-    GenServer.cast(h, {:set_init_acc, init_accum})
-    set_map_reduce(map_lambda, reduce_lambda, t, init_accum)
+    set_map_reduce(map_lambda, reduce_lambda, t)
   end
 
   def send_calc_command(solver_pid) do

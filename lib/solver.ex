@@ -3,7 +3,7 @@ defmodule Solver do
   require Mapper
 
   def init(_args) do
-    {:ok, %{elements: [], map: [], reduce: [], init_acc: 0}}
+    {:ok, %{elements: [], map: [], reduce: []}}
   end
 
   def handle_call(:get_state, _from, state) do
@@ -20,7 +20,7 @@ defmodule Solver do
   end
 
   def handle_cast({:calc, pid}, state) do
-    solve(state.map, state.elements, state.reduce, pid, state.init_acc)
+    solve(state.map, state.elements, state.reduce, pid)
     {:noreply, state}
   end
 
@@ -28,15 +28,11 @@ defmodule Solver do
     {:noreply, %{state | map: map, reduce: reduce}}
   end
 
-  def handle_cast({:set_init_acc, init_acc}, state) do
-    {:noreply, %{state | init_acc: init_acc}}
-  end
-
-  defp solve(map_lambda, raw, reduce_lambda, pid, init_accum) do
+  defp solve(map_lambda, raw, reduce_lambda, pid) do
     send(
       pid,
       {:result,
-       [init_accum | Mapper.apply_map(map_lambda, raw)]
+       Mapper.apply_map(map_lambda, raw)
        |> Enum.reduce(fn x, acc -> reduce_lambda.(acc, x) end)}
     )
   end

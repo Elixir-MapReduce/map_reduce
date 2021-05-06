@@ -37,15 +37,7 @@ defmodule ProblemDomains do
   end
 
   def handle_call({:word_count, _pid}, _from, _state) do
-    {:reply, {&dict_mapper/1, &dict_reducer/2, %{}}, %{}}
-  end
-
-  def handle_call({:get_init_acc, :word_count}, _from, _state) do
-    {:reply, %{}, %{}}
-  end
-
-  def handle_call({:get_init_acc, :identity_sum}, _from, _state) do
-    {:reply, 0, %{}}
+    {:reply, {&dict_mapper/1, &dict_reducer/2}, %{}}
   end
 
   def handle_call({:get_reduce, :word_count}, _from, _state) do
