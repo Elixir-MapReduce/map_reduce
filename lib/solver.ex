@@ -1,6 +1,5 @@
 defmodule Solver do
   use GenServer
-  require Mapper
 
   def init(_args) do
     {:ok, %{elements: [], map: [], reduce: []}}
@@ -32,8 +31,16 @@ defmodule Solver do
     send(
       pid,
       {:result,
-       Mapper.apply_map(map_lambda, raw)
+       Enum.map(to_list(raw), map_lambda)
        |> Enum.reduce(fn x, acc -> reduce_lambda.(acc, x) end)}
     )
+  end
+
+  defp to_list(%Range{} = range) do
+    Enum.to_list(range)
+  end
+
+  defp to_list(list) when is_list(list) do
+    list
   end
 end
