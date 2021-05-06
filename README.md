@@ -21,10 +21,10 @@ acc = 0 # acc is the answer for the problem when the list is empty (here, sum of
 Then you can use the MapReduce module to calculate the ansewr for your desired list:
 ```elixir
 list = [1,4,5,6,3] # you can change this
-MapReduce.main(list, mapper, reducer, acc) # you should get 19 here
+MapReduce.solve(list, mapper, reducer, acc) # you should get 19 here
 ```
 
-Note that here we used anonymous functions, you can use normal functions but you have to use the syntax `MapReduce.main(list, &mapper, &reducer, acc)` in that case
+Note that here we used anonymous functions, you can use normal functions but you have to use the syntax `MapReduce.solve(list, &mapper, &reducer, acc)` in that case
 
 ## License
 

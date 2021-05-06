@@ -5,11 +5,11 @@ defmodule MapReduce do
   require Randomizer
 
   # not implemented yet
-  def main() do
-    main(:word_count)
+  def solve() do
+    solve(:word_count)
   end
 
-  def main(collection, map_lambda, reduce_lambda, acc, process_count \\ 10_000) do
+  def solve(collection, map_lambda, reduce_lambda, acc, process_count \\ 10_000) do
     solver_pids = Enum.map(collection |> Partitioner.partition(process_count), &spawn_solver/1)
 
     accum = acc
@@ -23,7 +23,7 @@ defmodule MapReduce do
     result
   end
 
-  def main(problem_domain, process_count, collection) do
+  def solve(problem_domain, process_count, collection) do
     domains_pid = elem(GenServer.start(ProblemDomains, []), 1)
     solver_pids = Enum.map(collection |> Partitioner.partition(process_count), &spawn_solver/1)
 
@@ -41,10 +41,10 @@ defmodule MapReduce do
     result
   end
 
-  def main(problem_domain) do
+  def solve(problem_domain) do
     domains_pid = elem(GenServer.start(ProblemDomains, []), 1)
 
-    main(
+    solve(
       problem_domain,
       100_000,
       GenServer.call(domains_pid, {:get_sample_list, problem_domain}, 10000)
