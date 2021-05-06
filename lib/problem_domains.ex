@@ -1,15 +1,12 @@
 defmodule ProblemDomains do
   require Randomizer
+  use GenServer
 
-  def start_link do
-    Task.start_link(fn -> loop() end)
-  end
-
-  def dict_reducer(map, c) when c == %{} do
+  defp dict_reducer(map, c) when c == %{} do
     map
   end
 
-  def dict_reducer(map, c) when is_map(c) do
+  defp dict_reducer(map, c) when is_map(c) do
     [key | _t] = Map.keys(c)
     value = Map.get(c, key)
 
@@ -19,41 +16,51 @@ defmodule ProblemDomains do
     )
   end
 
-  def dict_reducer(map, word) do
+  defp dict_reducer(map, word) do
     Map.update(map, word, 1, fn prev_count -> prev_count + 1 end)
   end
 
-  defp loop() do
-    dict_mapper = fn a -> a end
-
-    receive do
-      {:two_times_plus_1_sum, pid} -> send(pid, {&(&1 * 2 + 1), &(&1 + &2)})
-      {:identity_sum, pid} -> send(pid, {& &1, &(&1 + &2)})
-      {:word_count, pid} -> send(pid, {dict_mapper, &dict_reducer/2, %{}})
-    end
+  defp dict_mapper(x) do
+    %{x => 1}
   end
 
-  def get_init_accum(:word_count) do
-    %{}
+  def init(_args) do
+    {:ok, %{}}
   end
 
-  def get_init_accum(:identity_sum) do
-    0
+  def handle_call({:two_times_plus_1_sum, _pid}, _from, _state) do
+    {:reply, {&(&1 * 2 + 1), &(&1 + &2)}, %{}}
   end
 
-  def merger(:word_count) do
-    &dict_reducer/2
+  def handle_call({:identity_sum, _pid}, _from, _state) do
+    {:reply, {& &1, &(&1 + &2)}, %{}}
   end
 
-  def merger(:identity_sum) do
-    &(&1 + &2)
+  def handle_call({:word_count, _pid}, _from, _state) do
+    {:reply, {&dict_mapper/1, &dict_reducer/2, %{}}, %{}}
   end
 
-  def get_sample_list(:identity_sum) do
-    1..10_000_000
+  def handle_call({:get_init_acc, :word_count}, _from, _state) do
+    {:reply, %{}, %{}}
   end
 
-  def get_sample_list(:word_count) do
-    Randomizer.randomizer(3, 1_000_000)
+  def handle_call({:get_init_acc, :identity_sum}, _from, _state) do
+    {:reply, 0, %{}}
+  end
+
+  def handle_call({:get_merger, :word_count}, _from, _state) do
+    {:reply, &dict_reducer/2, %{}}
+  end
+
+  def handle_call({:get_merger, :identity_sum}, _from, _state) do
+    {:reply, &(&1 + &2), %{}}
+  end
+
+  def handle_call({:get_sample_list, :identity_sum}, _from, _state) do
+    {:reply, 1..10_000_000, %{}}
+  end
+
+  def handle_call({:get_sample_list, :word_count}, _from, _state) do
+    {:reply, Randomizer.randomizer(3, 1_000_000), %{}}
   end
 end

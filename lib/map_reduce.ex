@@ -24,17 +24,15 @@ defmodule MapReduce do
   end
 
   def main(problem_domain, process_count, collection) do
-    domains_pid = elem(ProblemDomains.start_link(), 1)
+    domains_pid = elem(GenServer.start(ProblemDomains, []), 1)
     solver_pids = spawn_solvers(collection |> Partitioner.partition(process_count))
 
-    send(domains_pid, {problem_domain, self()})
+    accum = GenServer.call(domains_pid, {:get_init_acc, problem_domain})
+    merger = GenServer.call(domains_pid, {:get_merger, problem_domain})
 
-    accum = ProblemDomains.get_init_accum(problem_domain)
-    merger = ProblemDomains.merger(problem_domain)
-
-    receive do
+    case GenServer.call(domains_pid, {problem_domain, self()}) do
       {map, reduce} -> set_map_reduce(map, reduce, solver_pids)
-      {map, reduce, init_accum} -> set_map_reduce(map, reduce, solver_pids, init_accum)
+      {map, reduce, init_acc} -> set_map_reduce(map, reduce, solver_pids, init_acc)
     end
 
     send_calc_command(solver_pids)
@@ -44,7 +42,7 @@ defmodule MapReduce do
   end
 
   def main(problem_domain) do
-    main(problem_domain, 100_000, ProblemDomains.get_sample_list(problem_domain))
+    main(problem_domain, 100_000, GenServer.call(problem_domain, {:get_sample_list}))
   end
 
   defp gather_loop(0, current_result, _merger) do
