@@ -48,11 +48,11 @@ defmodule ProblemDomains do
     {:reply, 0, %{}}
   end
 
-  def handle_call({:get_merger, :word_count}, _from, _state) do
+  def handle_call({:get_reduce, :word_count}, _from, _state) do
     {:reply, &dict_reducer/2, %{}}
   end
 
-  def handle_call({:get_merger, :identity_sum}, _from, _state) do
+  def handle_call({:get_reduce, :identity_sum}, _from, _state) do
     {:reply, &(&1 + &2), %{}}
   end
 

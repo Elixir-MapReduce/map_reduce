@@ -13,13 +13,13 @@ defmodule MapReduce do
     solver_pids = spawn_solvers(collection |> Partitioner.partition(process_count))
 
     accum = acc
-    merger = reduce_lambda
+    reduce = reduce_lambda
 
     set_map_reduce(map_lambda, reduce_lambda, solver_pids, acc)
 
     send_calc_command(solver_pids)
 
-    result = gather_loop(length(solver_pids), accum, merger)
+    result = gather_loop(length(solver_pids), accum, reduce)
     result
   end
 
@@ -28,7 +28,7 @@ defmodule MapReduce do
     solver_pids = spawn_solvers(collection |> Partitioner.partition(process_count))
 
     accum = GenServer.call(domains_pid, {:get_init_acc, problem_domain})
-    merger = GenServer.call(domains_pid, {:get_merger, problem_domain})
+    reduce = GenServer.call(domains_pid, {:get_reduce, problem_domain})
 
     case GenServer.call(domains_pid, {problem_domain, self()}) do
       {map, reduce} -> set_map_reduce(map, reduce, solver_pids)
@@ -37,7 +37,7 @@ defmodule MapReduce do
 
     send_calc_command(solver_pids)
 
-    result = gather_loop(length(solver_pids), accum, merger)
+    result = gather_loop(length(solver_pids), accum, reduce)
     result
   end
 
@@ -45,14 +45,14 @@ defmodule MapReduce do
     main(problem_domain, 100_000, GenServer.call(problem_domain, {:get_sample_list}))
   end
 
-  defp gather_loop(0, current_result, _merger) do
+  defp gather_loop(0, current_result, _reduce) do
     current_result
   end
 
-  defp gather_loop(remaining_responses, current_result, merger) do
+  defp gather_loop(remaining_responses, current_result, reduce) do
     receive do
       {:result, result} ->
-        gather_loop(remaining_responses - 1, merger.(current_result, result), merger)
+        gather_loop(remaining_responses - 1, reduce.(current_result, result), reduce)
     end
   end
 
