@@ -67,8 +67,8 @@ defmodule MapReduce do
   end
 
   defp spawn_solvers(_list = [h | t], solver_pids) do
-    solver_pid = elem(Solver.start_link(), 1)
-    send(solver_pid, {:set_raw_array, h})
+    solver_pid = elem(GenServer.start(Solver, []), 1)
+    GenServer.cast(solver_pid, {:set_elements, h})
     spawn_solvers(t, [solver_pid | solver_pids])
   end
 
@@ -80,8 +80,8 @@ defmodule MapReduce do
   end
 
   def set_map_reduce(map_lambda, reduce_lambda, _remaining_pids = [h | t], init_accum) do
-    send(h, {:set_map_reduce, map_lambda, reduce_lambda})
-    send(h, {:set_init_accum, init_accum})
+    GenServer.cast(h, {:set_map_reduce, map_lambda, reduce_lambda})
+    GenServer.cast(h, {:set_init_acc, init_accum})
     set_map_reduce(map_lambda, reduce_lambda, t, init_accum)
   end
 
@@ -89,7 +89,7 @@ defmodule MapReduce do
   end
 
   def send_calc_command(_remaining_pids = [h | t]) do
-    send(h, {:calc, self()})
+    GenServer.cast(h, {:calc, self()})
     send_calc_command(t)
   end
 end
