@@ -1,7 +1,6 @@
 defmodule Solver do
   use GenServer
   require Mapper
-  require Reducer
 
   def init(_args) do
     {:ok, %{elements: [], map: [], reduce: [], init_acc: 0}}
@@ -36,7 +35,9 @@ defmodule Solver do
   defp solve(map_lambda, raw, reduce_lambda, pid, init_accum) do
     send(
       pid,
-      {:result, [init_accum | Mapper.apply_map(map_lambda, raw)] |> Reducer.reduce(reduce_lambda)}
+      {:result,
+       [init_accum | Mapper.apply_map(map_lambda, raw)]
+       |> Enum.reduce(fn x, acc -> reduce_lambda.(acc, x) end)}
     )
   end
 end
