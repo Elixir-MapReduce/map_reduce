@@ -11,15 +11,7 @@ defmodule Randomizer do
   end
 
   def randomizer(length_of_strings, length_of_list) do
-    randomizer(length_of_strings, length_of_list, [])
-  end
-
-  def randomizer(_length_of_strings, 0, result) do
-    result
-  end
-
-  def randomizer(length_of_strings, length_of_list, result) do
-    randomizer(length_of_strings, length_of_list - 1, [randomizer(length_of_strings) | result])
+    Enum.map(1..length_of_list, fn _x -> randomizer(length_of_strings) end)
   end
 
   defp get_range(length) when length > 1, do: 1..length
