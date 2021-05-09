@@ -1,4 +1,4 @@
-defmodule Solver do
+defmodule Worker do
   use GenServer
 
   def init(_args) do
@@ -30,9 +30,11 @@ defmodule Solver do
   defp solve(map_lambda, raw, reduce_lambda, pid) do
     send(
       pid,
-      {:result,
-       Enum.map(to_list(raw), map_lambda)
-       |> Enum.reduce(fn x, acc -> reduce_lambda.(acc, x) end)}
+      {
+        :result,
+        to_list(raw)
+        |> Enum.reduce(fn x, acc -> reduce_lambda.(acc, x) end)
+      }
     )
   end
 
