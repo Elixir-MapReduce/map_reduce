@@ -18,12 +18,12 @@ fn mapper {source, target} -> %{target => [source]} end
 fn reducer a,b -> %{get_key(a) => Enum.concat(get_value(a), get_value(b))} end
 ```
 
-`note`: `get_key` and `get_value` are two functions that assume the given input is a map with only one key and value, the return that key or value.
+`note`: `get_key` and `get_value` are two functions that assume the given input is a map with only one key and value, and they return the key or value for that map.
 
 Then you can use the MapReduce module to calculate the ansewr for your desired list:
 ```elixir
 list = [{1, 3}, {2, 3}, {4, 5}, {5, 6}]
-MapReduce.solve(list, mapper, reducer) # you should get %{3 => [1, 2], 5 => [4], 6 => [5]} in this scenario 
+MapReduce.solve(list, mapper, reducer) # you should get %{3 => [1, 2], 5 => [4], 6 => [5]}
 ```
 
 Note that here we used anonymous functions, you can use normal functions but you have to use the syntax `MapReduce.solve(list, &mapper, &reducer)` in that case
