@@ -13,8 +13,8 @@ defmodule MapReduceTest do
   end
 
   test "word_total_count" do
-    process_count = 5000
-    total_word_count = 1000_000
+    process_count = 500
+    total_word_count = 10_000
     words = Randomizer.randomizer(3, total_word_count)
 
     result_count =
