@@ -23,4 +23,12 @@ defmodule MapReduceTest do
 
     assert(result_count == total_word_count)
   end
+
+  test "page_rank" do
+    pid = GenServer.start(SampleDomains, []) |> elem(1)
+    {map, reduce} = GenServer.call(pid, {:page_rank})
+    connections = [{1, 3}, {2, 3}, {4, 5}, {5, 6}]
+
+    assert(MapReduce.solve(connections, map, reduce) == %{3 => [1, 2], 5 => [4], 6 => [5]})
+  end
 end
