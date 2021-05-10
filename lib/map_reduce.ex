@@ -38,8 +38,6 @@ defmodule MapReduce do
       |> Map.values()
       |> Enum.map(&spawn_worker/1)
 
-    #    worker_pids = Enum.map(collection |> Partitioner.partition(process_count), &spawn_worker/1)
-
     reduce = reduce_lambda
 
     Enum.each(
@@ -49,7 +47,7 @@ defmodule MapReduce do
       end
     )
 
-    Enum.each(worker_pids, &send_calc_command/1)
+    Enum.each(worker_pids, fn worker_pid -> GenServer.cast(worker_pid, {:calc, self()}) end)
 
     result = gather_loop(length(worker_pids), reduce)
     result
@@ -87,9 +85,5 @@ defmodule MapReduce do
     worker_pid = elem(GenServer.start(Worker, []), 1)
     GenServer.cast(worker_pid, {:set_elements, collection})
     worker_pid
-  end
-
-  def send_calc_command(worker_pid) do
-    GenServer.cast(worker_pid, {:calc, self()})
   end
 end

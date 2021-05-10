@@ -12,16 +12,6 @@ defmodule MapReduceTest do
            }
   end
 
-  #  test "identity_list_sum" do
-  #    assert MapReduce.solve(:identity_sum, 2, [1, 4, 6, 8, 1, 8, 3, 6, 2, 7, 3, 7, 8, 4]) == 68
-  #  end
-  #
-  #  test "identity_range_sum" do
-  #    n = 100_000
-  #    process_count = 100_000
-  #    assert MapReduce.solve(:identity_sum, process_count, 1..n) == n * (n + 1) / 2
-  #  end
-  #
   test "word_total_count" do
     process_count = 5000
     total_word_count = 1000_000
@@ -33,11 +23,4 @@ defmodule MapReduceTest do
 
     assert(result_count == total_word_count)
   end
-
-  #
-  #  test "user_defined_map_reduce" do
-  #    mapper = & &1
-  #    reducer = &(&1 + &2)
-  #    assert([1, 4, 5, 6, 3] |> MapReduce.solve(mapper, reducer) == 19)
-  #  end
 end
