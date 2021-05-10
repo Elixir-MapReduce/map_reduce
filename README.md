@@ -9,18 +9,16 @@ First, open the ternimal, go to the application root and then run:
 iex -S mix
 ```
 
-Then you have to define two functions, `map` and `reduce`, depending on the problem you want to solve. 
-For example if you want to calculate the sum of elements of a list, here's what you have to do:
+Then you have to define two functions, `map` and `reduce`, depending on the problem you want to solve:
 
 ```elixir
-mapper = fn (x) -> x end
-reducer = fn (x, y) -> x + y end
+mapper = fn (x) -> nil end # you have to define something instead of nil
+reducer = fn (x, y) -> nil end # you have to define something instead of nil
 ```
 
 Then you can use the MapReduce module to calculate the ansewr for your desired list:
 ```elixir
-list = [1,4,5,6,3] # you can change this
-MapReduce.solve(list, mapper, reducer) # you should get 19 here
+MapReduce.solve(list, mapper, reducer)
 ```
 
 Note that here we used anonymous functions, you can use normal functions but you have to use the syntax `MapReduce.solve(list, &mapper, &reducer)` in that case
