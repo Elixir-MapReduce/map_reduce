@@ -2,25 +2,41 @@ defmodule SampleDomains do
   require Randomizer
   use GenServer
 
-  defp dict_reducer(map, c) when c == %{} do
-    map
+  #  defp dict_reducer(map, c) when c == %{} do
+  #    map
+  #  end
+  #
+  #  defp dict_reducer(map, c) when is_map(c) do
+  #    [key | _t] = Map.keys(c)
+  #    value = Map.get(c, key)
+  #
+  #    dict_reducer(
+  #      Map.update(map, key, value, fn prev_count -> prev_count + value end),
+  #      Map.delete(c, key)
+  #    )
+  #  end
+  #
+  #  defp dict_reducer(map, word) do
+  #    Map.update(map, word, 1, fn prev_count -> prev_count + 1 end)
+  #  end
+
+  def dict_reducer(x, y) do
+    %{
+      get_key(x) => get_value(y) + get_value(x)
+    }
   end
 
-  defp dict_reducer(map, c) when is_map(c) do
-    [key | _t] = Map.keys(c)
-    value = Map.get(c, key)
-
-    dict_reducer(
-      Map.update(map, key, value, fn prev_count -> prev_count + value end),
-      Map.delete(c, key)
-    )
+  defp get_key(x) do
+    Map.keys(x)
+    |> List.first()
   end
 
-  defp dict_reducer(map, word) do
-    Map.update(map, word, 1, fn prev_count -> prev_count + 1 end)
+  defp get_value(x) do
+    Map.values(x)
+    |> List.first()
   end
 
-  defp dict_mapper(x) do
+  def dict_mapper(x) do
     %{x => 1}
   end
 

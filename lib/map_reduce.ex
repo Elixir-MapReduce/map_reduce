@@ -1,10 +1,9 @@
 defmodule MapReduce do
   require SampleDomains
   require Partitioner
-  require Solver
+  require Worker
   require Randomizer
 
-  # not implemented yet
   def solve() do
     solve(:word_count)
   end
@@ -22,17 +21,37 @@ defmodule MapReduce do
   end
 
   def solve(collection, map_lambda, reduce_lambda, process_count) do
-    solver_pids = Enum.map(collection |> Partitioner.partition(process_count), &spawn_solver/1)
+    worker_pids =
+      collection
+      |> Partitioner.partition(process_count)
+      |> Task.async_stream(
+        fn c -> Enum.map(c, map_lambda) end,
+        max_concurrency: process_count,
+        ordered: false
+      )
+      |> Enum.map(fn {:ok, list} -> list end)
+      |> List.flatten()
+      |> Enum.group_by(fn x ->
+        Map.keys(x)
+        |> List.first()
+      end)
+      |> Map.values()
+      |> Enum.map(&spawn_worker/1)
+
+    #    worker_pids = Enum.map(collection |> Partitioner.partition(process_count), &spawn_worker/1)
 
     reduce = reduce_lambda
 
-    Enum.each(solver_pids, fn solver_pid ->
-      GenServer.cast(solver_pid, {:set_map_reduce, map_lambda, reduce_lambda})
-    end)
+    Enum.each(
+      worker_pids,
+      fn worker_pid ->
+        GenServer.cast(worker_pid, {:set_map_reduce, map_lambda, reduce_lambda})
+      end
+    )
 
-    Enum.each(solver_pids, &send_calc_command/1)
+    Enum.each(worker_pids, &send_calc_command/1)
 
-    result = gather_loop(length(solver_pids), reduce)
+    result = gather_loop(length(worker_pids), reduce)
     result
   end
 
@@ -60,17 +79,17 @@ defmodule MapReduce do
   defp gather_loop(remaining_responses, current_result, reduce) do
     receive do
       {:result, result} ->
-        gather_loop(remaining_responses - 1, reduce.(current_result, result), reduce)
+        gather_loop(remaining_responses - 1, Map.merge(current_result, result), reduce)
     end
   end
 
-  def spawn_solver(collection) do
-    solver_pid = elem(GenServer.start(Solver, []), 1)
-    GenServer.cast(solver_pid, {:set_elements, collection})
-    solver_pid
+  def spawn_worker(collection) do
+    worker_pid = elem(GenServer.start(Worker, []), 1)
+    GenServer.cast(worker_pid, {:set_elements, collection})
+    worker_pid
   end
 
-  def send_calc_command(solver_pid) do
-    GenServer.cast(solver_pid, {:calc, self()})
+  def send_calc_command(worker_pid) do
+    GenServer.cast(worker_pid, {:calc, self()})
   end
 end
