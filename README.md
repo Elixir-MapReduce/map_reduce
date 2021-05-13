@@ -14,11 +14,16 @@ Let's say you have a list of connections in the format {source, target} and you 
 sources that have connections to it. Here's how you can define your map & reduce functions:
 
 ```elixir
-fn mapper {source, target} -> %{target => [source]} end
-fn reducer a,b -> %{get_key(a) => Enum.concat(get_value(a), get_value(b))} end
+mapper = fn {source, target} -> %{target => [source]} end
+reducer = fn a,b -> %{get_key.(a) => Enum.concat(get_value.(a), get_value.(b))} end
 ```
 
 `note`: `get_key` and `get_value` are two functions that assume the given input is a map with only one key and value, and they return the key or value for that map.
+something like this:
+```elixir
+get_key = fn x -> Map.keys(x) |> List.first end
+get_value = fn x -> Map.values(x) |> List.first end
+```
 
 Then you can use the MapReduce module to calculate the ansewr for your desired list:
 ```elixir
