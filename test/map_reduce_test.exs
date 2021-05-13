@@ -13,9 +13,9 @@ defmodule MapReduceTest do
   end
 
   test "word_total_count" do
-    process_count = 500
-    total_word_count = 10_000
-    words = Randomizer.randomizer(3, total_word_count)
+    process_count = 400
+    total_word_count = 500_000
+    words = Randomizer.randomizer(7, total_word_count)
 
     result_count =
       MapReduce.solve(:word_count, process_count, words)

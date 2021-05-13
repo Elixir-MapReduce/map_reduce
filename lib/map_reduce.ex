@@ -3,7 +3,8 @@ defmodule MapReduce do
   require Partitioner
   require Worker
   require Randomizer
-
+  #   collection  
+  #   |> MapReduce.solve(process_count, partitions, :problem_domain)
   def solve() do
     solve(:word_count)
   end
@@ -22,35 +23,49 @@ defmodule MapReduce do
 
   def solve(collection, map_lambda, reduce_lambda, process_count) do
     worker_pids =
-      collection
-      |> Partitioner.partition(process_count)
-      |> Task.async_stream(
-        fn c -> Enum.map(c, map_lambda) end,
-        max_concurrency: process_count,
-        ordered: false
-      )
-      |> Enum.map(fn {:ok, list} -> list end)
+      Enum.map(1..process_count, fn _ -> GenServer.start(Worker, []) |> elem(1) end)
+      |> List.duplicate(div(length(collection) + process_count - 1, process_count))
       |> List.flatten()
-      |> Enum.group_by(fn x ->
-        Map.keys(x)
-        |> List.first()
-      end)
-      |> Map.values()
-      |> Enum.map(&spawn_worker/1)
 
-    reduce = reduce_lambda
-
-    Enum.each(
-      worker_pids,
-      fn worker_pid ->
-        GenServer.cast(worker_pid, {:set_map_reduce, map_lambda, reduce_lambda})
-      end
+    collection
+    |> Partitioner.partition(process_count)
+    |> Enum.zip(worker_pids)
+    |> Task.async_stream(
+      fn {parition, worker_pid} -> GenServer.call(worker_pid, {:map, parition, map_lambda}) end,
+      max_concurrency: process_count,
+      ordered: false
     )
+    |> Enum.to_list()
+    |> Enum.map(fn {:ok, list} -> list end)
+    |> List.flatten()
+    |> Enum.group_by(fn x ->
+      Map.keys(x)
+      |> List.first()
+    end)
+    |> Map.values()
+    |> Enum.zip(worker_pids)
+    |> Task.async_stream(
+      fn {values, worker_pid} -> GenServer.call(worker_pid, {:reduce, values, reduce_lambda}) end,
+      max_concurrency: process_count,
+      ordered: false
+    )
+    |> Enum.to_list()
+    |> Enum.map(fn {:ok, list} -> list end)
+    |> concat_results()
 
-    Enum.each(worker_pids, fn worker_pid -> GenServer.cast(worker_pid, {:calc, self()}) end)
+    # result
+  end
 
-    result = gather_loop(length(worker_pids), reduce)
-    result
+  def concat_results(list) do
+    concat_results(list, %{})
+  end
+
+  def concat_results([], current_result) do
+    current_result
+  end
+
+  def concat_results([h | t], current_result) do
+    concat_results(t, Map.merge(current_result, h))
   end
 
   def solve(problem_domain) do
@@ -61,29 +76,5 @@ defmodule MapReduce do
       100_000,
       GenServer.call(domains_pid, {:get_sample_list, problem_domain}, 10000)
     )
-  end
-
-  defp gather_loop(remaining_pids, reduce) do
-    receive do
-      {:result, result} ->
-        gather_loop(remaining_pids - 1, result, reduce)
-    end
-  end
-
-  defp gather_loop(0, current_result, _reduce) do
-    current_result
-  end
-
-  defp gather_loop(remaining_responses, current_result, reduce) do
-    receive do
-      {:result, result} ->
-        gather_loop(remaining_responses - 1, Map.merge(current_result, result), reduce)
-    end
-  end
-
-  def spawn_worker(collection) do
-    worker_pid = elem(GenServer.start(Worker, []), 1)
-    GenServer.cast(worker_pid, {:set_elements, collection})
-    worker_pid
   end
 end
