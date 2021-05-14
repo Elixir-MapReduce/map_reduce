@@ -19,11 +19,7 @@ defmodule Worker do
     {:reply, Enum.map(array, mapper), state}
   end
 
-  defp to_list(%Range{} = range) do
-    Enum.to_list(range)
-  end
+  defp to_list(%Range{} = range), do: Enum.to_list(range)
 
-  defp to_list(list) when is_list(list) do
-    list
-  end
+  defp to_list(list) when is_list(list), do: list
 end

@@ -3,19 +3,6 @@ defmodule MapReduce do
   require Partitioner
   require Worker
   require Randomizer
-  #   collection  
-  #   |> MapReduce.solve(process_count, partitions, :problem_domain)
-  def solve() do
-    solve(:word_count)
-  end
-
-  def solve(problem_domain, process_count, collection) when is_atom(problem_domain) do
-    domains_pid = elem(GenServer.start(SampleDomains, []), 1)
-
-    case GenServer.call(domains_pid, {problem_domain, self()}) do
-      {map, reduce} -> solve(collection, map, reduce, process_count)
-    end
-  end
 
   def solve(collection, map_lambda, reduce_lambda) do
     solve(collection, map_lambda, reduce_lambda, 10_000)
@@ -29,52 +16,27 @@ defmodule MapReduce do
 
     collection
     |> Partitioner.partition(process_count)
-    |> Enum.zip(worker_pids)
-    |> Task.async_stream(
-      fn {parition, worker_pid} -> GenServer.call(worker_pid, {:map, parition, map_lambda}) end,
-      max_concurrency: process_count,
-      ordered: false
-    )
-    |> Enum.to_list()
-    |> Enum.map(fn {:ok, list} -> list end)
+    |> assign_jobs(worker_pids, process_count, {:map, map_lambda})
     |> List.flatten()
     |> Enum.group_by(fn x ->
       Map.keys(x)
       |> List.first()
     end)
     |> Map.values()
+    |> assign_jobs(worker_pids, process_count, {:reduce, reduce_lambda})
+    |> Enum.reduce(%{}, fn x, acc -> Map.merge(x, acc) end)
+  end
+
+  def assign_jobs(partitions, worker_pids, process_count, {job_type, lambda})
+      when is_atom(job_type) do
+    partitions
     |> Enum.zip(worker_pids)
     |> Task.async_stream(
-      fn {values, worker_pid} -> GenServer.call(worker_pid, {:reduce, values, reduce_lambda}) end,
+      fn {parition, worker_pid} -> GenServer.call(worker_pid, {job_type, parition, lambda}) end,
       max_concurrency: process_count,
       ordered: false
     )
     |> Enum.to_list()
     |> Enum.map(fn {:ok, list} -> list end)
-    |> concat_results()
-
-    # result
-  end
-
-  def concat_results(list) do
-    concat_results(list, %{})
-  end
-
-  def concat_results([], current_result) do
-    current_result
-  end
-
-  def concat_results([h | t], current_result) do
-    concat_results(t, Map.merge(current_result, h))
-  end
-
-  def solve(problem_domain) do
-    domains_pid = elem(GenServer.start(SampleDomains, []), 1)
-
-    solve(
-      problem_domain,
-      100_000,
-      GenServer.call(domains_pid, {:get_sample_list, problem_domain}, 10000)
-    )
   end
 end
