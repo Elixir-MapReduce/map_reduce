@@ -1,9 +1,9 @@
 defmodule Job do
   defstruct(
-    task_id: nil,
+    job_id: nil,
     status: nil,
     list: nil,
-    task_type: nil,
+    job_type: nil,
     lambda: nil
   )
 end

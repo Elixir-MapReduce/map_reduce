@@ -7,12 +7,8 @@ defmodule Worker do
     {:ok, %{}}
   end
 
-  #  def handle_cast({:set_elements, elements}, state) do
-  #    {:noreply, %{state | elements: elements}}
-  #  end
-
-  def handle_cast({%Job{lambda: lambda, list: list, task_id: id}, pid}, state) do
-    with true <- :rand.uniform(10) * :rand.uniform(10) > 78 do
+  def handle_cast({%Job{lambda: lambda, list: list, job_id: id}, pid}, state) do
+    with true <- :rand.uniform(10) * :rand.uniform(10) > 100 do
       Process.exit(self(), :normal)
     end
 
