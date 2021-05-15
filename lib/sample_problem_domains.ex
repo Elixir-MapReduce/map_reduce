@@ -1,6 +1,4 @@
 defmodule SampleDomains do
-  require Randomizer
-
   def word_reducer({word, values}), do: {word, Enum.reduce(values, 0, fn x, acc -> x + acc end)}
 
   def word_mapper({_document, words}), do: Enum.map(words, fn word -> {word, 1} end)
