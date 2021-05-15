@@ -27,7 +27,7 @@ defmodule MapReduceTest do
   end
 
   test "big word_count total sum" do
-    process_count = 10
+    process_count = 5000
 
     words = Helper.get_words("words.txt")
     total_word_count = length(words)
