@@ -3,13 +3,20 @@
 # MapReduce
 The aim of this project is to implement a distributed, fault-tolerant MapReduce framework using elixir language.
 
-## Usage Guide
-First, open the ternimal, go to the application root and then run:
-```sh
-iex -S mix
+## Installation
+This project is [available in Hex](https://hex.pm/packages/map_reduce), and can be installed
+by adding `map_reduce` to your list of dependencies in `mix.exs`:
+
+```elixir
+def deps do
+  [
+    {:map_reduce, "~> 0.1.0"}
+  ]
+end
 ```
 
-Then you have to define two functions, `map` and `reduce`, depending on the problem you want to solve.
+## Usage Guide
+You have to define two functions, `map` and `reduce`, depending on the problem you want to solve.
 Let's say we want to solve the famous `word count` problem.
 Here's how you can define your map & reduce functions:
 
