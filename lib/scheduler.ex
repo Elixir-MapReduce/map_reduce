@@ -12,12 +12,15 @@ defmodule Scheduler do
        submissions: MapSet.new(),
        child_responses: [],
        master: nil,
-       total_job_count: 0
+       total_jobs_count: 0
      }}
   end
 
-  def handle_cast({:assign_jobs, partitions, worker_pids, {job_type, lambda}, caller_pid}, state) do
-    workers_count = length(worker_pids)
+  def handle_cast(
+        {:schedule_jobs, partitions, workers_count, {job_type, lambda}, caller_pid},
+        state
+      ) do
+    worker_pids = Enum.map(1..workers_count, fn _ -> GenServer.start(Worker, []) |> elem(1) end)
 
     child_pids = MapSet.new(worker_pids)
 
@@ -58,7 +61,7 @@ defmodule Scheduler do
        | child_pids: child_pids,
          submissions: submissions,
          master: caller_pid,
-         total_job_count: length(partitions)
+         total_jobs_count: length(partitions)
      }}
   end
 
@@ -67,12 +70,12 @@ defmodule Scheduler do
       child_responses: child_responses,
       submissions: submissions,
       master: master,
-      total_job_count: total_job_count
+      total_jobs_count: total_jobs_count
     } = state
 
     current_result = [response | child_responses]
 
-    with true <- length(current_result) == total_job_count do
+    with true <- length(current_result) == total_jobs_count do
       send(master, {current_result})
     end
 
