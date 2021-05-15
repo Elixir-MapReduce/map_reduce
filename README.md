@@ -10,25 +10,18 @@ iex -S mix
 ```
 
 Then you have to define two functions, `map` and `reduce`, depending on the problem you want to solve.
-Let's say you have a list of connections in the format {source, target} and you want to calculate for each node the list of
-sources that have connections to it. Here's how you can define your map & reduce functions:
+Let's say we want to solve the famous `word count` problem.
+Here's how you can define your map & reduce functions:
 
 ```elixir
-mapper = fn {source, target} -> %{target => [source]} end
-reducer = fn a,b -> %{get_key.(a) => Enum.concat(get_value.(a), get_value.(b))} end
-```
-
-`note`: `get_key` and `get_value` are two functions that assume the given input is a map with only one key and value, and they return the key or value for that map.
-something like this:
-```elixir
-get_key = fn x -> Map.keys(x) |> List.first end
-get_value = fn x -> Map.values(x) |> List.first end
+mapper = fn {_document, words} -> Enum.map(words, fn word -> {word, 1} end) end
+reducer = fn {word, values} -> {word, Enum.reduce(values, 0, fn x, acc -> x + acc end)} end
 ```
 
 Then you can use the MapReduce module to calculate the ansewr for your desired list:
 ```elixir
-list = [{1, 3}, {2, 3}, {4, 5}, {5, 6}]
-MapReduce.solve(list, mapper, reducer) # you should get %{3 => [1, 2], 5 => [4], 6 => [5]}
+list = [{"document_name", ["a", "b", "a", "aa", "a"]}]
+MapReduce.solve(list, mapper, reducer) # you should get %{"a" => 3, "aa" => 1, "b" => 1} 
 ```
 
 Note that here we used anonymous functions, you can use normal functions but you have to use the syntax `MapReduce.solve(list, &mapper, &reducer)` in that case

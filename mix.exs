@@ -8,7 +8,8 @@ defmodule MapReduce.MixProject do
       elixir: "~> 1.11.4",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      escript: [main_module: MapReduce]
+      escript: [main_module: MapReduce],
+      xref: [exclude: [:crypto]]
     ]
   end
 
