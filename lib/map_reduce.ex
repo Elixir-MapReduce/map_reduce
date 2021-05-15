@@ -1,6 +1,5 @@
 defmodule MapReduce do
   require SampleDomains
-  require Partitioner
   require Worker
   require Randomizer
 
@@ -12,7 +11,6 @@ defmodule MapReduce do
     worker_pids = Enum.map(1..process_count, fn _ -> GenServer.start(Worker, []) |> elem(1) end)
 
     collection
-    |> Partitioner.partition(process_count)
     |> assign_jobs(worker_pids, process_count, {:map, map_lambda})
     |> List.flatten()
     |> Enum.group_by(fn {key, _value} -> key end)

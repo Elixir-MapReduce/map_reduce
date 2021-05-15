@@ -1,13 +1,12 @@
 defmodule MapReduceTest do
   use ExUnit.Case
-  require Partitioner
   require Randomizer
   require Helper
   doctest MapReduce
 
   test "word_count" do
     {map, reduce} = Helper.get_map_reduce(:word_count)
-    collection = [{"hp", "a"}, {"hp", "b"}, {"hp", "a"}, {"hp", "aa"}, {"hp", "a"}]
+    collection = [{"no_name", ["a", "b", "a", "aa", "a"]}]
 
     assert collection |> MapReduce.solve(map, reduce, 1) == %{
              "a" => 3,
@@ -16,32 +15,42 @@ defmodule MapReduceTest do
            }
   end
 
-  test "word_total_count" do
+  test "word_count with different sources" do
+    {map, reduce} = Helper.get_map_reduce(:word_count)
+
+    collection = [
+      {"document1", ["harry", "potter", "sam", "harry", "jack"]},
+      {"document2", ["jack", "potter", "harry", "daniel"]}
+    ]
+
+    assert collection |> MapReduce.solve(map, reduce, 2) ==
+             %{"daniel" => 1, "harry" => 3, "jack" => 2, "potter" => 2, "sam" => 1}
+  end
+
+  test "big word_count total sum" do
     process_count = 50
     total_word_count = 100_000
 
-    words =
-      Randomizer.randomizer(7, total_word_count)
-      |> Enum.map(fn word -> {"hp", word} end)
+    collection = [{"no_name", Randomizer.randomizer(7, total_word_count)}]
 
     {map, reduce} = Helper.get_map_reduce(:word_count)
 
     result_count =
-      MapReduce.solve(words, map, reduce, process_count)
+      MapReduce.solve(collection, map, reduce, process_count)
       |> Enum.reduce(0, fn {_k, v}, acc -> v + acc end)
 
-    assert(result_count == total_word_count)
+    assert result_count == total_word_count
   end
 
   test "page_rank" do
     {map, reduce} = Helper.get_map_reduce(:page_rank)
-    connections = [{1, 3}, {2, 3}, {4, 5}, {5, 6}]
+    connections = [{1, [3]}, {2, [3]}, {4, [5]}, {5, [6]}]
 
     result =
       MapReduce.solve(connections, map, reduce)
       |> Enum.map(fn {k, v} -> {k, Enum.sort(v)} end)
       |> Map.new()
 
-    assert(result == %{3 => [1, 2], 5 => [4], 6 => [5]})
+    assert result == %{3 => [1, 2], 5 => [4], 6 => [5]}
   end
 end

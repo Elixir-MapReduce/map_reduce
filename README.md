@@ -14,13 +14,13 @@ Let's say we want to solve the famous `word count` problem.
 Here's how you can define your map & reduce functions:
 
 ```elixir
-def mapper({_document, word}), do: [{word, 1}]
-def reducerr({word, values}), do: {word, Enum.reduce(values, 0, fn x, acc -> x + acc end)}
+mapper = fn {_document, words} -> Enum.map(words, fn word -> {word, 1} end) end
+reducer = fn {word, values} -> {word, Enum.reduce(values, 0, fn x, acc -> x + acc end)} end
 ```
 
 Then you can use the MapReduce module to calculate the ansewr for your desired list:
 ```elixir
-list = {"hp", "a"}, {"hp", "b"}, {"hp", "a"}, {"hp", "aa"}, {"hp", "a"}
+list = [{"document_name", ["a", "b", "a", "aa", "a"]}]
 MapReduce.solve(list, mapper, reducer) # you should get %{"a" => 3, "aa" => 1, "b" => 1} 
 ```
 

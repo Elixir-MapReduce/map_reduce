@@ -9,11 +9,11 @@ defmodule Worker do
     {:noreply, %{state | elements: elements}}
   end
 
-  def handle_call({:reduce, {key, values}, reducer}, _from, state) do
-    {:reply, reducer.({key, values}), state}
+  def handle_call({:reduce, key_values, reducer}, _from, state) do
+    {:reply, reducer.(key_values), state}
   end
 
-  def handle_call({:map, array, mapper}, _from, state) do
-    {:reply, Enum.map(array, mapper), state}
+  def handle_call({:map, key_value, mapper}, _from, state) do
+    {:reply, mapper.(key_value), state}
   end
 end
