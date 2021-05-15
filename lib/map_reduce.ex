@@ -1,7 +1,6 @@
 defmodule MapReduce do
   require SampleDomains
   require Worker
-  require Randomizer
 
   def solve(collection, map_lambda, reduce_lambda) do
     solve(collection, map_lambda, reduce_lambda, 10_000)

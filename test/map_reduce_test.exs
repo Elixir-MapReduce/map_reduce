@@ -1,6 +1,5 @@
 defmodule MapReduceTest do
   use ExUnit.Case
-  require Randomizer
   require Helper
   doctest MapReduce
 
@@ -28,10 +27,12 @@ defmodule MapReduceTest do
   end
 
   test "big word_count total sum" do
-    process_count = 50
-    total_word_count = 100_000
+    process_count = 10
 
-    collection = [{"no_name", Randomizer.randomizer(7, total_word_count)}]
+    words = Helper.get_words("words.txt")
+    total_word_count = length(words)
+
+    collection = [{"Romeo and Juliet", words}]
 
     {map, reduce} = Helper.get_map_reduce(:word_count)
 
