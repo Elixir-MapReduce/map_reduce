@@ -18,7 +18,7 @@ mapper = fn {_document, words} -> Enum.map(words, fn word -> {word, 1} end) end
 reducer = fn {word, values} -> {word, Enum.reduce(values, 0, fn x, acc -> x + acc end)} end
 ```
 
-Then you can use the MapReduce module to calculate the ansewr for your desired list:
+Then you can use the MapReduce module to calculate the answer for your desired list:
 ```elixir
 list = [{"document_name", ["a", "b", "a", "aa", "a"]}]
 MapReduce.solve(list, mapper, reducer) # you should get %{"a" => 3, "aa" => 1, "b" => 1} 
