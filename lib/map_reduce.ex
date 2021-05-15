@@ -30,13 +30,8 @@ defmodule MapReduce do
     :crypto.hash(:sha, to_string(key)) |> Base.encode16() |> Integer.parse(16) |> elem(0)
   end
 
-  def get_hash_for(_partition = [{key, _value} | _t]) do
-    :crypto.hash(:sha, to_string(key)) |> Base.encode16() |> Integer.parse(16) |> elem(0)
-  end
-
   def assign_jobs(partitions, worker_pids, {job_type, lambda})
-  when is_atom(job_type) do
-    
+      when is_atom(job_type) do
     workers_count = length(worker_pids)
 
     partitions
