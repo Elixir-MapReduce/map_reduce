@@ -1,19 +1,16 @@
 defmodule SampleDomains do
   require Randomizer
 
-  def dict_reducer(x, y), do: %{get_key(x) => get_value(y) + get_value(x)}
+  def dict_reducer({word, values}), do: {word, Enum.reduce(values, 0, fn x, acc -> x + acc end)}
 
-  defp get_key(x), do: Map.keys(x) |> List.first()
+  def dict_mapper({_document, word}), do: [{word, 1}]
 
-  defp get_value(x), do: Map.values(x) |> List.first()
+  def map_reduce({:word_count}), do: {&dict_mapper/1, &dict_reducer/1}
 
-  def dict_mapper(x), do: %{x => 1}
+  def map_reduce({:page_rank}), do: {&link_mapper/1, &link_reducer/1}
 
-  def map_reduce({:word_count}), do: {&dict_mapper/1, &dict_reducer/2}
+  def link_mapper({source, target}), do: [{target, [source]}]
 
-  def map_reduce({:page_rank}), do: {&link_mapper/1, &link_reducer/2}
-
-  def link_mapper({source, target}), do: %{target => [source]}
-
-  def link_reducer(a, b), do: %{get_key(a) => Enum.concat(get_value(a), get_value(b))}
+  def link_reducer({key, values}),
+    do: {key, Enum.reduce(values, [], fn x, acc -> Enum.concat([x], acc) end)}
 end

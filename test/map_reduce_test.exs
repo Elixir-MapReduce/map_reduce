@@ -7,7 +7,7 @@ defmodule MapReduceTest do
 
   test "word_count" do
     {map, reduce} = Helper.get_map_reduce(:word_count)
-    collection = ["a", "b", "a", "aa", "a"]
+    collection = [{"hp", "a"}, {"hp", "b"}, {"hp", "a"}, {"hp", "aa"}, {"hp", "a"}]
 
     assert collection |> MapReduce.solve(map, reduce, 1) == %{
              "a" => 3,
@@ -17,14 +17,18 @@ defmodule MapReduceTest do
   end
 
   test "word_total_count" do
-    process_count = 400
-    total_word_count = 500_000
-    words = Randomizer.randomizer(7, total_word_count)
+    process_count = 50
+    total_word_count = 100_000
+
+    words =
+      Randomizer.randomizer(7, total_word_count)
+      |> Enum.map(fn word -> {"hp", word} end)
 
     {map, reduce} = Helper.get_map_reduce(:word_count)
 
     result_count =
       MapReduce.solve(words, map, reduce, process_count)
+      |> IO.inspect()
       |> Enum.reduce(0, fn {_k, v}, acc -> v + acc end)
 
     assert(result_count == total_word_count)

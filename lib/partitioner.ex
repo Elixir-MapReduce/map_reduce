@@ -4,13 +4,6 @@ defmodule Partitioner do
   end
 
   def partition(%Range{} = range, parts_count) do
-    range_len = range.last - range.first + 1
-    single_instance_len = ceil(range_len / parts_count)
-
-    Stream.iterate(
-      range.first..(single_instance_len + range.first - 1),
-      &((&1.last + 1)..min(range.last, &1.last + single_instance_len))
-    )
-    |> Enum.take(parts_count)
+    partition(range |> Enum.to_list(), parts_count)
   end
 end

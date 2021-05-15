@@ -9,17 +9,11 @@ defmodule Worker do
     {:noreply, %{state | elements: elements}}
   end
 
-  def handle_call({:reduce, array, reducer}, _from, state) do
-    {:reply,
-     to_list(array)
-     |> Enum.reduce(fn x, acc -> reducer.(acc, x) end), state}
+  def handle_call({:reduce, {key, values}, reducer}, _from, state) do
+    {:reply, reducer.({key, values}), state}
   end
 
   def handle_call({:map, array, mapper}, _from, state) do
     {:reply, Enum.map(array, mapper), state}
   end
-
-  defp to_list(%Range{} = range), do: Enum.to_list(range)
-
-  defp to_list(list) when is_list(list), do: list
 end
