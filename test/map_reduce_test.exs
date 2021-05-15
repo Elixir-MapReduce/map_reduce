@@ -28,7 +28,6 @@ defmodule MapReduceTest do
 
     result_count =
       MapReduce.solve(words, map, reduce, process_count)
-      |> IO.inspect()
       |> Enum.reduce(0, fn {_k, v}, acc -> v + acc end)
 
     assert(result_count == total_word_count)
