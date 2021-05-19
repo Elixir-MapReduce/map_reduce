@@ -82,6 +82,7 @@ defmodule Scheduler do
       end
     end)
 
+    :timer.sleep(1000)
     monitor_heartbeats(worker_pids)
   end
 
@@ -154,9 +155,10 @@ defmodule Scheduler do
     %{child_pids: child_pids, submissions: submissions} = state
     child_pids = MapSet.delete(child_pids, pid)
 
+    # in case of network congestion
     send(pid, {:shutdown})
 
-    relevant_uncompleted_submissions =
+    orphan_submissions =
       Enum.filter(submissions, fn %Submission{job: %Job{status: status}, worker_pid: process_pid} ->
         process_pid == pid && status == :uncomplete
       end)
@@ -164,13 +166,13 @@ defmodule Scheduler do
     new_worker = GenServer.start(Worker, []) |> elem(1)
     child_pids = MapSet.put(child_pids, new_worker)
 
-    new_submissions =
-      relevant_uncompleted_submissions
+    adopted_submissions =
+      orphan_submissions
       |> Enum.map(fn %Submission{job: job} = _submission ->
         %Submission{job: job, worker_pid: new_worker}
       end)
 
-    submit(new_worker, new_submissions)
+    submit(new_worker, adopted_submissions)
 
     all_submissions =
       Enum.concat(
@@ -180,7 +182,7 @@ defmodule Scheduler do
                                     } ->
           status == :finished || process_pid != pid
         end),
-        new_submissions
+        adopted_submissions
       )
       |> MapSet.new()
 
