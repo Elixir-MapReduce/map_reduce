@@ -11,6 +11,7 @@ defmodule Scheduler do
        monitor: nil,
        child_pids: MapSet.new(),
        submissions: MapSet.new(),
+       completed_submissions: MapSet.new(),
        child_responses: [],
        master: nil,
        total_jobs_count: 0,
@@ -99,6 +100,7 @@ defmodule Scheduler do
     %{
       child_responses: child_responses,
       submissions: submissions,
+      completed_submissions: completed_submissions,
       master: master,
       total_jobs_count: total_jobs_count,
       received_jobs: received_jobs
@@ -120,15 +122,20 @@ defmodule Scheduler do
       submission = find_submission_with_id(submissions, job_id)
       %Submission{job: job, worker_pid: pid} = submission
 
-      submissions =
-        MapSet.delete(submissions, submission)
-        |> MapSet.put(%Submission{job: %Job{job | status: :finished}, worker_pid: pid})
+      submissions = MapSet.delete(submissions, submission)
+
+      completed_submissions =
+        MapSet.put(completed_submissions, %Submission{
+          job: %Job{job | status: :finished},
+          worker_pid: pid
+        })
 
       {:noreply,
        %{
          state
          | child_responses: current_result,
            submissions: submissions,
+           completed_submissions: completed_submissions,
            received_jobs: MapSet.put(received_jobs, job_id)
        }}
     end
@@ -150,15 +157,19 @@ defmodule Scheduler do
   end
 
   def switch_dead_worker(pid, state) do
-    %{child_pids: child_pids, submissions: submissions} = state
+    %{
+      child_pids: child_pids,
+      submissions: submissions,
+    } = state
+
     child_pids = MapSet.delete(child_pids, pid)
 
     # in case of network congestion
     send(pid, {:shutdown})
 
     orphan_submissions =
-      Enum.filter(submissions, fn %Submission{job: %Job{status: status}, worker_pid: process_pid} ->
-        process_pid == pid && status == :uncomplete
+      Enum.filter(submissions, fn %Submission{job: %Job{}, worker_pid: process_pid} ->
+        process_pid == pid
       end)
 
     new_worker = GenServer.start(Worker, []) |> elem(1)
@@ -173,18 +184,10 @@ defmodule Scheduler do
     submit(new_worker, adopted_submissions)
 
     all_submissions =
-      Enum.concat(
-        Enum.filter(submissions, fn %Submission{
-                                      job: %Job{status: status},
-                                      worker_pid: process_pid
-                                    } ->
-          status == :finished || process_pid != pid
-        end),
-        adopted_submissions
-      )
+      Enum.filter(submissions, fn el -> !Enum.member?(orphan_submissions, el) end)
+      |> Enum.concat(adopted_submissions)
       |> MapSet.new()
 
     {:noreply, %{state | child_pids: child_pids, submissions: all_submissions}}
   end
 end
-
