@@ -23,7 +23,6 @@ defmodule Scheduler do
         state
       ) do
     worker_pids = Enum.map(1..workers_count, fn _ -> GenServer.start(Worker, []) |> elem(1) end)
-
     child_pids = MapSet.new(worker_pids)
 
     submissions =
@@ -76,13 +75,12 @@ defmodule Scheduler do
   defp monitor_heartbeats(worker_pids) do
     Enum.each(worker_pids, fn worker_pid ->
       try do
-        :alive = GenServer.call(worker_pid, :heart_beat, 500)
+        :alive = GenServer.call(worker_pid, :heart_beat, 200)
       catch
         :exit, _ -> Process.exit(self(), {:kill, worker_pid})
       end
     end)
 
-    :timer.sleep(1000)
     monitor_heartbeats(worker_pids)
   end
 
@@ -189,3 +187,4 @@ defmodule Scheduler do
     {:noreply, %{state | child_pids: child_pids, submissions: all_submissions}}
   end
 end
+

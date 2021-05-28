@@ -9,16 +9,22 @@ defmodule Worker do
 
   def handle_cast({%Job{lambda: lambda, list: list, job_id: id}, pid}, state) do
     spawn_monitor(fn ->
-      #      with true <- :rand.uniform(10) * :rand.uniform(10) > 70 do
-      #        Process.exit(self(), :normal)
-      #      end
+      # with true <- :rand.uniform(10) * :rand.uniform(10) > 60 do
+      # Process.exit(self(), :kill)
+      # end
+
       send(pid, {:response, lambda.(list), id})
     end)
 
     {:noreply, state}
   end
 
-  def handle_info({:DOWN, _ref, :process, _pid, :normal}, _state) do
+  def handle_info({:DOWN, _ref, :process, _pid, :normal}, state) do
+    # do nothing
+    {:noreply, state}
+  end
+
+  def handle_info({:DOWN, _ref, :process, _pid, :killed}, _state) do
     Process.exit(self(), :normal)
   end
 
@@ -27,9 +33,10 @@ defmodule Worker do
   end
 
   def handle_call(:heart_beat, _from, state) do
-    #      with true <- :rand.uniform(10) * :rand.uniform(10) > 50 do
-    #        :timer.sleep(10000)
-    #      end
+    # with true <- :rand.uniform(10) * :rand.uniform(10) > 60 do
+    # :timer.sleep(10000)
+    # end
+
     {:reply, :alive, state}
   end
 end
