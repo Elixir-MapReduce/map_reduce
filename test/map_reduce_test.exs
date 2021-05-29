@@ -1,6 +1,8 @@
 defmodule MapReduceTest do
   use ExUnit.Case
   require Helper
+  require Job
+  require Submission
   doctest MapReduce
 
   test "word_count" do
@@ -27,12 +29,19 @@ defmodule MapReduceTest do
   end
 
   test "big word_count total sum" do
-    process_count = 5
+    process_count = 50
 
     words = Helper.get_words("words.txt")
     total_word_count = length(words)
 
-    collection = [{"Romeo and Juliet", words}]
+    chunks = Enum.chunk_every(words, 3000)
+
+    collection =
+      chunks
+      |> Enum.zip(1..10000)
+      |> Enum.map(fn {chunk, chunk_id} -> {"part#{chunk_id}", chunk} end)
+
+    #    collection = [{"Romeo and Juliet", words}]
 
     {map, reduce} = Helper.get_map_reduce(:word_count)
 
@@ -53,5 +62,16 @@ defmodule MapReduceTest do
       |> Map.new()
 
     assert result == %{3 => [1, 2], 5 => [4], 6 => [5]}
+  end
+
+  test "test job struct" do
+    assert %Job{} == %Job{job_id: nil, job_type: nil, lambda: nil, list: nil, status: nil}
+  end
+
+  test "test submission struct" do
+    assert %Submission{} == %Submission{
+             job: %Job{job_id: nil, job_type: nil, lambda: nil, list: nil, status: nil},
+             worker_pid: nil
+           }
   end
 end

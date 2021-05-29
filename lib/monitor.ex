@@ -5,10 +5,6 @@ defmodule Monitor do
     MapSet.new(workers)
   end
 
-  defp to_map_set(worker) do
-    MapSet.new([worker])
-  end
-
   def init([workers, scheduler]) do
     workers = to_map_set(workers)
     monitor_failure(workers)
@@ -31,7 +27,7 @@ defmodule Monitor do
   defp monitor_heartbeats(worker_pids) do
     Enum.each(worker_pids, fn worker_pid ->
       try do
-        :alive = GenServer.call(worker_pid, :heart_beat, 300)
+        :alive = GenServer.call(worker_pid, :heart_beat, 10)
       catch
         :exit, _ ->
           Process.exit(self(), {:heartbeat_loop_dead, worker_pid})
@@ -47,8 +43,8 @@ defmodule Monitor do
   end
 
   def handle_info(
-        {:DOWN, _ref, :process, _pid, {:heartbeat_loop_dead, worker_pid, workers: workers}},
-        %{scheduler: scheduler} = state
+        {:DOWN, _ref, :process, _pid, {:heartbeat_loop_dead, worker_pid}},
+        %{scheduler: scheduler, workers: workers} = state
       ) do
     GenServer.cast(scheduler, {:switch_dead_worker, worker_pid})
 
