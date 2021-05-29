@@ -1,5 +1,5 @@
 ![CI](https://github.com/ihaveint/map_reduce/workflows/Elixir%20CI/badge.svg)
-[![Hex version badge](https://img.shields.io/badge/Hex-0.1.0-blue)](https://hex.pm/packages/map_reduce)
+[![Hex version badge](https://img.shields.io/badge/Hex-0.2.0-blue)](https://hex.pm/packages/map_reduce)
 ![Coverage](https://img.shields.io/badge/coverage-98.04%25-green)
 
 # MapReduce
