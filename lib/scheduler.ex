@@ -6,6 +6,9 @@ defmodule Scheduler do
 
   use GenServer
 
+  @worker_failures_rate 5
+  @network_congestion_rate 5
+
   def init(_args) do
     {:ok,
      %{
@@ -27,8 +30,6 @@ defmodule Scheduler do
       monitor: monitor
     } = state
 
-
-
     is_member = MapSet.member?(child_pids, pid)
 
     if false == is_member do
@@ -45,7 +46,9 @@ defmodule Scheduler do
           process_pid == pid
         end)
 
-      new_worker = GenServer.start(Worker, [5,5]) |> elem(1)
+      new_worker =
+        GenServer.start(Worker, [@worker_failures_rate, @network_congestion_rate]) |> elem(1)
+
       child_pids = MapSet.put(child_pids, new_worker)
 
       adopted_submissions =
@@ -61,7 +64,6 @@ defmodule Scheduler do
         |> Enum.concat(adopted_submissions)
         |> MapSet.new()
 
-
       {:noreply, %{state | child_pids: child_pids, submissions: all_submissions}}
     end
   end
@@ -69,13 +71,16 @@ defmodule Scheduler do
   def handle_cast(
         {:schedule_jobs, partitions, workers_count, {job_type, lambda}, caller_pid},
         state
-  ) do
+      ) do
+    worker_pids =
+      Enum.map(1..workers_count, fn _ ->
+        GenServer.start(Worker, [@worker_failures_rate, @network_congestion_rate]) |> elem(1)
+      end)
 
-    worker_pids = Enum.map(1..workers_count, fn _ -> GenServer.start(Worker, [5 , 5]) |> elem(1) end)
     child_pids = MapSet.new(worker_pids)
 
-#    IO.puts("#{length(partitions)}, #{length(worker_pids)}")
-#    IO.inspect(partitions)
+    #    IO.puts("#{length(partitions)}, #{length(worker_pids)}")
+    #    IO.inspect(partitions)
     monitor = GenServer.start(Monitor, [worker_pids, self()]) |> elem(1)
 
     submissions =
