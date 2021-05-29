@@ -71,6 +71,7 @@ defmodule MapReduceTest do
   test "test submission struct" do
     assert %Submission{} == %Submission{
              job: %Job{job_id: nil, job_type: nil, lambda: nil, list: nil, status: nil},
+             result: nil,
              worker_pid: nil
            }
   end
