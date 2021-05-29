@@ -7,7 +7,10 @@ defmodule Worker do
     {:ok, %{failure_rate: failure_rate, network_congestion_rate: network_congestion_rate}}
   end
 
-  def handle_cast({%Job{lambda: lambda, list: list, job_id: id}, pid}, %{failure_rate: rate} = state) do
+  def handle_cast(
+        {%Job{lambda: lambda, list: list, job_id: id}, pid},
+        %{failure_rate: rate} = state
+      ) do
     result = lambda.(list)
 
     with true <- :rand.uniform(10) * :rand.uniform(10) <= rate do
