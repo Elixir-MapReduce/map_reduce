@@ -45,7 +45,7 @@ defmodule Scheduler do
           process_pid == pid
         end)
 
-      new_worker = GenServer.start(Worker, []) |> elem(1)
+      new_worker = GenServer.start(Worker, [5,5]) |> elem(1)
       child_pids = MapSet.put(child_pids, new_worker)
 
       adopted_submissions =
@@ -69,10 +69,13 @@ defmodule Scheduler do
   def handle_cast(
         {:schedule_jobs, partitions, workers_count, {job_type, lambda}, caller_pid},
         state
-      ) do
-    worker_pids = Enum.map(1..workers_count, fn _ -> GenServer.start(Worker, []) |> elem(1) end)
+  ) do
+
+    worker_pids = Enum.map(1..workers_count, fn _ -> GenServer.start(Worker, [5 , 5]) |> elem(1) end)
     child_pids = MapSet.new(worker_pids)
 
+#    IO.puts("#{length(partitions)}, #{length(worker_pids)}")
+#    IO.inspect(partitions)
     monitor = GenServer.start(Monitor, [worker_pids, self()]) |> elem(1)
 
     submissions =

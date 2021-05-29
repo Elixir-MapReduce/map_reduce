@@ -5,10 +5,6 @@ defmodule Monitor do
     MapSet.new(workers)
   end
 
-  defp to_map_set(worker) do
-    MapSet.new([worker])
-  end
-
   def init([workers, scheduler]) do
     workers = to_map_set(workers)
     monitor_failure(workers)

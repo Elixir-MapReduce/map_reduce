@@ -3,16 +3,16 @@ defmodule Worker do
 
   require Job
 
-  def init(_args) do
-    {:ok, %{}}
+  def init([failure_rate, network_congestion_rate]) do
+    {:ok, %{failure_rate: failure_rate, network_congestion_rate: network_congestion_rate}}
   end
 
-  def handle_cast({%Job{lambda: lambda, list: list, job_id: id}, pid}, state) do
+  def handle_cast({%Job{lambda: lambda, list: list, job_id: id}, pid}, %{failure_rate: rate} = state) do
     result = lambda.(list)
 
-    # with true <- :rand.uniform(10) * :rand.uniform(10) > 80 do
-    # Process.exit(self(), :kill)
-    # end
+    with true <- :rand.uniform(10) * :rand.uniform(10) <= rate do
+      Process.exit(self(), :kill)
+    end
 
     send(pid, {:response, result, id})
 
@@ -32,10 +32,10 @@ defmodule Worker do
     Process.exit(self(), :normal)
   end
 
-  def handle_call(:heart_beat, _from, state) do
-    # with true <- :rand.uniform(10) * :rand.uniform(10) > 90 do
-    # :timer.sleep(10)
-    # end
+  def handle_call(:heart_beat, _from, %{network_congestion_rate: rate} = state) do
+    with true <- :rand.uniform(10) * :rand.uniform(10) <= rate do
+      :timer.sleep(10)
+    end
 
     {:reply, :alive, state}
   end
