@@ -13,30 +13,27 @@ defmodule Scheduler do
     {:ok,
      %{
        monitor: nil,
-       child_pids: MapSet.new(),
+       workers: MapSet.new(),
        submissions: MapSet.new(),
        completed_submissions: MapSet.new(),
-       child_responses: [],
-       master: nil,
-       total_jobs_count: 0,
-       received_jobs: MapSet.new()
+       master: nil
      }}
   end
 
   def handle_cast({:switch_dead_worker, pid}, state) do
     %{
-      child_pids: child_pids,
+      workers: workers,
       submissions: submissions,
       monitor: monitor
     } = state
 
-    is_member = MapSet.member?(child_pids, pid)
+    is_member = MapSet.member?(workers, pid)
 
     if false == is_member do
       # TODO: debug this
       {:noreply, state}
     else
-      child_pids = MapSet.delete(child_pids, pid)
+      workers = MapSet.delete(workers, pid)
 
       # in case of network congestion
       send(pid, {:shutdown})
@@ -49,7 +46,7 @@ defmodule Scheduler do
       new_worker =
         GenServer.start(Worker, [@worker_failures_rate, @network_congestion_rate]) |> elem(1)
 
-      child_pids = MapSet.put(child_pids, new_worker)
+      workers = MapSet.put(workers, new_worker)
 
       adopted_submissions =
         orphan_submissions
@@ -64,7 +61,7 @@ defmodule Scheduler do
         |> Enum.concat(adopted_submissions)
         |> MapSet.new()
 
-      {:noreply, %{state | child_pids: child_pids, submissions: all_submissions}}
+      {:noreply, %{state | workers: workers, submissions: all_submissions}}
     end
   end
 
@@ -77,7 +74,7 @@ defmodule Scheduler do
         GenServer.start(Worker, [@worker_failures_rate, @network_congestion_rate]) |> elem(1)
       end)
 
-    child_pids = MapSet.new(worker_pids)
+    workers = MapSet.new(worker_pids)
 
     monitor = GenServer.start(Monitor, [worker_pids, self()]) |> elem(1)
 
@@ -112,43 +109,27 @@ defmodule Scheduler do
       end
     )
 
-    #    {pid, ref} =
-    #      spawn_monitor(fn ->
-    #        monitor_heartbeats(child_pids)
-    #      end)
-
     {:noreply,
      %{
        state
        | monitor: monitor,
-         child_pids: child_pids,
+         workers: workers,
          submissions: submissions,
-         master: caller_pid,
-         total_jobs_count: length(partitions)
+         master: caller_pid
      }}
   end
 
   def handle_info({:response, response, job_id}, state) do
     %{
-      child_responses: child_responses,
       submissions: submissions,
       completed_submissions: completed_submissions,
       master: master,
-      total_jobs_count: total_jobs_count,
-      received_jobs: received_jobs,
       monitor: monitor
     } = state
 
-    if MapSet.member?(received_jobs, job_id) do
+    if find_submission_with_id(completed_submissions, job_id) != nil do
       {:noreply, state}
     else
-      current_result = [response | child_responses]
-
-      with true <- length(current_result) == total_jobs_count do
-        send(monitor, {:goodbye})
-        send(master, {current_result})
-      end
-
       submission = find_submission_with_id(submissions, job_id)
       %Submission{job: job, worker_pid: pid} = submission
 
@@ -157,16 +138,24 @@ defmodule Scheduler do
       completed_submissions =
         MapSet.put(completed_submissions, %Submission{
           job: %Job{job | status: :finished},
+          result: response,
           worker_pid: pid
         })
+
+      with true <- 0 == MapSet.size(submissions) do
+        send(monitor, {:goodbye})
+
+        send(
+          master,
+          {Enum.map(completed_submissions, fn %Submission{result: result} -> result end)}
+        )
+      end
 
       {:noreply,
        %{
          state
-         | child_responses: current_result,
-           submissions: submissions,
-           completed_submissions: completed_submissions,
-           received_jobs: MapSet.put(received_jobs, job_id)
+         | submissions: submissions,
+           completed_submissions: completed_submissions
        }}
     end
   end
