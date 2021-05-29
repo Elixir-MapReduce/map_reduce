@@ -22,22 +22,13 @@ defmodule Worker do
     {:noreply, state}
   end
 
-  def handle_info({:DOWN, _ref, :process, _pid, :normal}, state) do
-    # do nothing
-    {:noreply, state}
-  end
-
-  def handle_info({:DOWN, _ref, :process, _pid, :killed}, _state) do
-    Process.exit(self(), :normal)
-  end
-
   def handle_info({:shutdown}, _state) do
     Process.exit(self(), :normal)
   end
 
   def handle_call(:heart_beat, _from, %{network_congestion_rate: rate} = state) do
     with true <- :rand.uniform(10) * :rand.uniform(10) <= rate do
-      :timer.sleep(10)
+      :timer.sleep(300)
     end
 
     {:reply, :alive, state}

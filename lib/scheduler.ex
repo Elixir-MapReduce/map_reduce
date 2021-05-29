@@ -6,8 +6,8 @@ defmodule Scheduler do
 
   use GenServer
 
-  @worker_failures_rate 5
-  @network_congestion_rate 5
+  @worker_failures_rate 3
+  @network_congestion_rate 3
 
   def init(_args) do
     {:ok,
@@ -79,8 +79,6 @@ defmodule Scheduler do
 
     child_pids = MapSet.new(worker_pids)
 
-    #    IO.puts("#{length(partitions)}, #{length(worker_pids)}")
-    #    IO.inspect(partitions)
     monitor = GenServer.start(Monitor, [worker_pids, self()]) |> elem(1)
 
     submissions =
@@ -145,8 +143,6 @@ defmodule Scheduler do
       {:noreply, state}
     else
       current_result = [response | child_responses]
-
-      # IO.puts("#{length(current_result)}, #{total_jobs_count}")
 
       with true <- length(current_result) == total_jobs_count do
         send(monitor, {:goodbye})
