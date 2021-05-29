@@ -2,6 +2,7 @@ defmodule Scheduler do
   require Helper
   require Job
   require Submission
+  require Monitor
 
   use GenServer
 
@@ -19,12 +20,60 @@ defmodule Scheduler do
      }}
   end
 
+  def handle_cast({:switch_dead_worker, pid}, state) do
+    %{
+      child_pids: child_pids,
+      submissions: submissions,
+      monitor: monitor
+    } = state
+
+
+
+    is_member = MapSet.member?(child_pids, pid)
+
+    if false == is_member do
+      # TODO: debug this
+      {:noreply, state}
+    else
+      child_pids = MapSet.delete(child_pids, pid)
+
+      # in case of network congestion
+      send(pid, {:shutdown})
+
+      orphan_submissions =
+        Enum.filter(submissions, fn %Submission{job: %Job{}, worker_pid: process_pid} ->
+          process_pid == pid
+        end)
+
+      new_worker = GenServer.start(Worker, []) |> elem(1)
+      child_pids = MapSet.put(child_pids, new_worker)
+
+      adopted_submissions =
+        orphan_submissions
+        |> Enum.map(fn %Submission{job: job} = _submission ->
+          %Submission{job: job, worker_pid: new_worker}
+        end)
+
+      submit(new_worker, adopted_submissions, monitor)
+
+      all_submissions =
+        Enum.filter(submissions, fn el -> !Enum.member?(orphan_submissions, el) end)
+        |> Enum.concat(adopted_submissions)
+        |> MapSet.new()
+
+
+      {:noreply, %{state | child_pids: child_pids, submissions: all_submissions}}
+    end
+  end
+
   def handle_cast(
         {:schedule_jobs, partitions, workers_count, {job_type, lambda}, caller_pid},
         state
       ) do
     worker_pids = Enum.map(1..workers_count, fn _ -> GenServer.start(Worker, []) |> elem(1) end)
     child_pids = MapSet.new(worker_pids)
+
+    monitor = GenServer.start(Monitor, [worker_pids, self()]) |> elem(1)
 
     submissions =
       partitions
@@ -53,47 +102,24 @@ defmodule Scheduler do
         %Submission{worker_pid: worker_pid} =
           submission = find_submission_with_id(submissions, id)
 
-        submit(worker_pid, [submission])
+        submit(worker_pid, [submission], monitor)
       end
     )
 
-    {pid, ref} =
-      spawn_monitor(fn ->
-        monitor_heartbeats(child_pids)
-      end)
+    #    {pid, ref} =
+    #      spawn_monitor(fn ->
+    #        monitor_heartbeats(child_pids)
+    #      end)
 
     {:noreply,
      %{
        state
-       | monitor: {pid, ref},
+       | monitor: monitor,
          child_pids: child_pids,
          submissions: submissions,
          master: caller_pid,
          total_jobs_count: length(partitions)
      }}
-  end
-
-  defp monitor_heartbeats(worker_pids) do
-    Enum.each(worker_pids, fn worker_pid ->
-      try do
-        :alive = GenServer.call(worker_pid, :heart_beat, 200)
-      catch
-        :exit, _ -> Process.exit(self(), {:kill, worker_pid})
-      end
-    end)
-
-    monitor_heartbeats(worker_pids)
-  end
-
-  def handle_info({:DOWN, _ref, :process, _pid, {:kill, pid}}, state) do
-    {:noreply, new_state = %{child_pids: worker_pids}} = switch_dead_worker(pid, state)
-
-    new_monitor =
-      spawn_monitor(fn ->
-        monitor_heartbeats(worker_pids)
-      end)
-
-    {:noreply, %{new_state | monitor: new_monitor, child_pids: worker_pids}}
   end
 
   def handle_info({:response, response, job_id}, state) do
@@ -103,20 +129,20 @@ defmodule Scheduler do
       completed_submissions: completed_submissions,
       master: master,
       total_jobs_count: total_jobs_count,
-      received_jobs: received_jobs
+      received_jobs: received_jobs,
+      monitor: monitor
     } = state
 
     if MapSet.member?(received_jobs, job_id) do
       {:noreply, state}
     else
-      {monitor_pid, _} = Map.get(state, :monitor)
-
       current_result = [response | child_responses]
 
+      # IO.puts("#{length(current_result)}, #{total_jobs_count}")
+
       with true <- length(current_result) == total_jobs_count do
-        Process.exit(monitor_pid, :normal)
+        send(monitor, {:goodbye})
         send(master, {current_result})
-        Process.exit(self(), :normal)
       end
 
       submission = find_submission_with_id(submissions, job_id)
@@ -141,12 +167,8 @@ defmodule Scheduler do
     end
   end
 
-  def handle_info({:DOWN, _ref, :process, pid, _reason}, state) do
-    switch_dead_worker(pid, state)
-  end
-
-  defp submit(worker_pid, submissions) do
-    Process.monitor(worker_pid)
+  defp submit(worker_pid, submissions, monitor) do
+    GenServer.cast(monitor, {:monitor_worker, worker_pid})
 
     submissions
     |> Enum.each(fn %Submission{job: job} -> GenServer.cast(worker_pid, {job, self()}) end)
@@ -154,40 +176,5 @@ defmodule Scheduler do
 
   def find_submission_with_id(submissions, job_id) do
     Enum.find(submissions, fn %Submission{job: %Job{job_id: id}} -> id == job_id end)
-  end
-
-  def switch_dead_worker(pid, state) do
-    %{
-      child_pids: child_pids,
-      submissions: submissions,
-    } = state
-
-    child_pids = MapSet.delete(child_pids, pid)
-
-    # in case of network congestion
-    send(pid, {:shutdown})
-
-    orphan_submissions =
-      Enum.filter(submissions, fn %Submission{job: %Job{}, worker_pid: process_pid} ->
-        process_pid == pid
-      end)
-
-    new_worker = GenServer.start(Worker, []) |> elem(1)
-    child_pids = MapSet.put(child_pids, new_worker)
-
-    adopted_submissions =
-      orphan_submissions
-      |> Enum.map(fn %Submission{job: job} = _submission ->
-        %Submission{job: job, worker_pid: new_worker}
-      end)
-
-    submit(new_worker, adopted_submissions)
-
-    all_submissions =
-      Enum.filter(submissions, fn el -> !Enum.member?(orphan_submissions, el) end)
-      |> Enum.concat(adopted_submissions)
-      |> MapSet.new()
-
-    {:noreply, %{state | child_pids: child_pids, submissions: all_submissions}}
   end
 end
