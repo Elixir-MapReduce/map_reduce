@@ -28,3 +28,7 @@ map_reduce-*.tar
 /tmp
 
 .DS_Store
+
+output.txt
+
+*.lock

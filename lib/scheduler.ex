@@ -6,8 +6,8 @@ defmodule Scheduler do
 
   use GenServer
 
-  @worker_failures_rate 3
-  @network_congestion_rate 3
+  @worker_failures_rate 0
+  @network_congestion_rate 0
 
   def init(_args) do
     {:ok,

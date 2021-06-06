@@ -5,7 +5,7 @@ defmodule MapReduce.MixProject do
     [
       app: :map_reduce,
       version: "0.1.0",
-      elixir: "~> 1.12.0",
+      elixir: "~> 1.10.3",
       start_permanent: Mix.env() == :prod,
       description: description(),
       package: package(),
@@ -25,12 +25,13 @@ defmodule MapReduce.MixProject do
 
   defp deps do
     [
-      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
+      {:poison,"~> 3.1"}
     ]
   end
 
   defp description() do
-    "This package allows you to use the MapReduce paradigm to solve a question, 
+    "This package allows you to use the MapReduce paradigm to solve a question,
     given that you have the functions map and reduce for that problem"
   end
 
