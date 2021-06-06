@@ -12,7 +12,7 @@ by adding `map_reduce` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:map_reduce, "~> 0.1.0"}
+    {:map_reduce, "~> 0.2.0"}
   ]
 end
 ```
