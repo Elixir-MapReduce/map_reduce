@@ -161,7 +161,7 @@ defmodule Scheduler do
   end
 
   defp submit(worker_pid, submissions, monitor) do
-    GenServer.cast(monitor, {:monitor_worker, worker_pid})
+    #GenServer.cast(monitor, {:monitor_worker, worker_pid})
 
     submissions
     |> Enum.each(fn %Submission{job: job} -> GenServer.cast(worker_pid, {job, self()}) end)

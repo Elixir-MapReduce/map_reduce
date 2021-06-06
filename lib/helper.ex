@@ -7,10 +7,11 @@ defmodule Helper do
 
   def get_words(file_path) do
     File.read!(file_path)
-    |> String.replace(~r"[, ; . ? ! \[ \] \) \( \: \" \- ]", " ")
+    #|> String.replace(~r"[, ; . ? ! \[ \] \) \( \: \" \- ]", " ")
     |> String.trim()
-    |> String.downcase()
-    |> String.split(~r/\n| /)
+    #|> String.downcase()
+    |> String.split()
+    #|> String.split(~r/\n| /)
   end
 
   def get_hash_for({key, _value}) do

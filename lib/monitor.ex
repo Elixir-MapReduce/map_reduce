@@ -6,16 +6,16 @@ defmodule Monitor do
   end
 
   def init([workers, scheduler]) do
-    workers = to_map_set(workers)
-    monitor_failure(workers)
-    {pid, ref} = spawn_monitor(fn -> monitor_heartbeats(workers) end)
+    #workers = to_map_set(workers)
+    #monitor_failure(workers)
+    #{pid, ref} = spawn_monitor(fn -> monitor_heartbeats(workers) end)
 
     {
       :ok,
       %{
-        heartbeat_loop: {pid, ref},
-        workers: workers,
-        scheduler: scheduler
+     #   heartbeat_loop: {pid, ref},
+      #  workers: workers,
+       # scheduler: scheduler
       }
     }
   end
