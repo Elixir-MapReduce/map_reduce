@@ -57,6 +57,7 @@ defmodule Worker do
 
     if Enum.empty?(data) == false do
       IO.puts("starting to execute reduce function")
+
       data =
         data
         |> Flow.from_enumerable()
@@ -82,6 +83,7 @@ defmodule Worker do
       |> IO.inspect()
       |> Stream.into(File.stream!(file_path, [:write]))
       |> Stream.run()
+
       IO.puts("finished writing reduce to file")
     end
 

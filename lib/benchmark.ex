@@ -2,8 +2,8 @@ defmodule Benchmark do
   def run() do
     Benchee.run(
       %{
-        "sequential" => fn -> MapReduce.no_overhead() end,
-        "parallel" => fn -> MapReduce.run() end
+        "sequential" => fn -> MapReduce.run(:file, "yelp_academic_dataset_review.json") end,
+        "parallel" => fn -> MapReduce.run(:chunks, "chunks/", 16) end
       },
       parallel: 1,
       formatters: [

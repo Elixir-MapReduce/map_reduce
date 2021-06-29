@@ -2,21 +2,9 @@ defmodule MapReduce do
   require ETS.Cache, as: Cache
   require Input
 
-  @file_path "yelp_academic_dataset_review.json"
-  @chunk_folder "chunks/"
-  @chunked true
-  @chunks_count 16
-
-  @stages 16
   @worker_count 8
 
-  def run() do
-    chunks = if @chunked do
-      Input.from(:chunks, @chunk_folder, @chunks_count)
-    else
-      Input.from(:file, @file_path)
-    end
-
+  def run_with_benchmark(chunks) do
     anf = fn ->
       map_lambda = fn words ->
         words
@@ -28,15 +16,25 @@ defmodule MapReduce do
       reduce_lambda = fn {key, values} ->
         {key, Enum.sum(values)}
       end
-      
-      run2(chunks, map_lambda, reduce_lambda)
+
+      run(chunks, map_lambda, reduce_lambda)
     end
 
     {timer1, _} = Helper.get_benchmark(anf)
     IO.inspect(timer1)
   end
 
-  def run2(chunks, map_lambda, reduce_lambda) do
+  def run(:file, file_path) do
+    Input.from(:file, file_path)
+    |> run_with_benchmark()
+  end
+
+  def run(:chunks, chunk_folder, chunk_count) do
+    Input.from(:chunks, chunk_folder, chunk_count)
+    |> run_with_benchmark()
+  end
+
+  def run(chunks, map_lambda, reduce_lambda) do
     File.rm_rf("bucket/")
     File.mkdir("bucket/")
 
@@ -106,7 +104,7 @@ defmodule MapReduce do
   end
 
   def no_overhead_map() do
-    anf2 = fn ->
+    anf = fn ->
       chunks =
         0..0
         |> Enum.map(fn index ->
@@ -122,13 +120,13 @@ defmodule MapReduce do
       end)
     end
 
-    {timer1, response} = Helper.get_benchmark(anf2)
+    Helper.get_benchmark(anf)
   end
 
-  def no_overhead() do
+  def no_overhead(file_path) do
     anf = fn ->
-      File.stream!(@file_path)
-      Stream.flat_map(&String.split(&1, " "))
+      File.stream!(file_path)
+      |> Stream.flat_map(&String.split(&1, " "))
       |> Enum.reduce(%{}, fn word, acc ->
         Map.update(acc, word, 1, &(&1 + 1))
       end)
@@ -138,9 +136,9 @@ defmodule MapReduce do
     IO.inspect(timer1)
   end
 
-  def no_overhead_flow() do
+  def no_overhead_flow(file_path) do
     anf = fn ->
-      File.stream!(@file_path)
+      File.stream!(file_path)
       |> Flow.from_enumerable()
       |> Flow.flat_map(&String.split(&1, " "))
       |> Flow.partition()

@@ -9,13 +9,13 @@ defmodule Helper do
     {time / 1_000_000, value}
   end
 
-  #def get_hash_for_key(key) when is_bitstring(key) == false do
-    #:crypto.hash(:sha, to_string(key)) |> Base.encode16() |> Integer.parse(16) |> elem(0)
-  #end
-  
+  # def get_hash_for_key(key) when is_bitstring(key) == false do
+  # :crypto.hash(:sha, to_string(key)) |> Base.encode16() |> Integer.parse(16) |> elem(0)
+  # end
+
   def get_hash_for_key(key) do
     :crypto.hash(:sha, to_string(key)) |> Base.encode16() |> Integer.parse(16) |> elem(0)
-    #String.length(key)
+    # String.length(key)
   end
 
   def get_words(file_path) do

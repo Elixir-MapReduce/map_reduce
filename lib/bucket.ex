@@ -18,16 +18,21 @@ defmodule Bucket do
 
   @impl true
   def handle_cast(:persist_buffers, state) do
-    new_state = Enum.reduce(state, state, fn {key, value}, acc ->
-      if String.starts_with?(key, "buffer") do
-        IO.inspect("debug")
-        IO.inspect(value)
-        index = String.slice(key, 6..(String.length(key))) |> IO.inspect() |> Integer.parse() |> elem(0)
-        persist_index(acc, index, value)
-      else
-        acc
-      end
-    end)
+    new_state =
+      Enum.reduce(state, state, fn {key, value}, acc ->
+        if String.starts_with?(key, "buffer") do
+          IO.inspect("debug")
+          IO.inspect(value)
+
+          index =
+            String.slice(key, 6..String.length(key)) |> IO.inspect() |> Integer.parse() |> elem(0)
+
+          persist_index(acc, index, value)
+        else
+          acc
+        end
+      end)
+
     {:noreply, new_state}
   end
 
