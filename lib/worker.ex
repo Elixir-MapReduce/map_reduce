@@ -80,7 +80,6 @@ defmodule Worker do
 
       result
       |> Stream.map(fn {k, v} -> "#{k} => #{v}\n" end)
-      |> IO.inspect()
       |> Stream.into(File.stream!(file_path, [:write]))
       |> Stream.run()
 

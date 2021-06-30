@@ -19,15 +19,11 @@ defmodule Bucket do
   @impl true
   def handle_cast(:persist_buffers, state) do
     new_state =
-      Enum.reduce(state, state, fn {key, value}, acc ->
+      Enum.reduce(state, state, fn {key, buffer}, acc ->
         if String.starts_with?(key, "buffer") do
-          IO.inspect("debug")
-          IO.inspect(value)
+          index = String.slice(key, 6..String.length(key)) |> Integer.parse() |> elem(0)
 
-          index =
-            String.slice(key, 6..String.length(key)) |> IO.inspect() |> Integer.parse() |> elem(0)
-
-          persist_index(acc, index, value)
+          persist_index(acc, index, buffer)
         else
           acc
         end
@@ -43,12 +39,9 @@ defmodule Bucket do
 
   @impl true
   def handle_call({:get, index}, _from, state) do
-    IO.puts("bucket received get request, #{index}")
     buffer = get_buffer(state, index)
-    IO.inspect(buffer)
     storage = get_storage(state, index)
 
-    IO.puts("bucket processes get request")
     {:reply, {buffer, storage}, state}
   end
 
@@ -99,16 +92,16 @@ defmodule Bucket do
 
     prefix = "bucket/storage" <> Integer.to_string(index) <> "_parts"
 
-    0..parts_count
+    0..(parts_count - 1)
     |> Enum.reduce([], fn part_index, acc ->
-      file_path = prefix <> Integer.to_string(get_parts_count(state, part_index)) <> ".txt"
+      file_path = prefix <> Integer.to_string(part_index) <> ".txt"
 
       case File.read(file_path) do
         {:ok, binary} ->
           (binary |> :erlang.binary_to_term()) ++ acc
 
-        {:error, _reason} ->
-          acc
+        {:error, reason} ->
+          raise reason
       end
     end)
   end
