@@ -5,7 +5,7 @@ defmodule MapReduce.MixProject do
     [
       app: :map_reduce_v2,
       version: "0.1.0",
-      elixir: "~> 1.12",
+      elixir: "~> 1.10.3",
       start_permanent: Mix.env() == :prod,
       deps: deps()
     ]

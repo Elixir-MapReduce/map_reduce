@@ -142,12 +142,15 @@ defmodule MapReduce do
       |> Flow.from_enumerable()
       |> Flow.flat_map(&String.split(&1, " "))
       |> Flow.partition()
-      |> Enum.reduce(fn -> %{} end, fn word, acc ->
-        Map.update(acc, word, 1, &(&1 + 1))
+      |> Flow.reduce(fn -> %{} end, fn word, acc ->
+        Map.update(acc, word, 1, & &1 + 1)
       end)
+      |> Flow.run()
+      # |> Enum.to_list()
     end
 
     {timer1, _} = Helper.get_benchmark(anf)
     IO.inspect(timer1)
+
   end
 end
