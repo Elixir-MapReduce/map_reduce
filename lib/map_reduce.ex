@@ -2,7 +2,7 @@ defmodule MapReduce do
   require ETS.Cache, as: Cache
   require Input
 
-  @worker_count 8
+  @worker_count 28
 
   def run_with_benchmark(chunks) do
     anf = fn ->
@@ -54,7 +54,7 @@ defmodule MapReduce do
 
     master = GenServer.start_link(Master, [@worker_count, chunks_length, self()]) |> elem(1)
 
-    IO.inspect("starting mapping")
+    # IO.inspect("starting mapping")
 
     0..(chunks_length - 1)
     |> Stream.map(fn index ->
@@ -66,13 +66,13 @@ defmodule MapReduce do
       {:job_done} -> nil
     end
 
-    IO.inspect("mapping finished")
+    # IO.inspect("mapping finished")
 
     GenServer.cast(Bucket, :persist_buffers)
 
     partition_length = 8
 
-    IO.inspect("reduce start")
+    # IO.inspect("reduce start")
 
     :ok = GenServer.call(master, {:set_job_counter, partition_length})
 
@@ -84,7 +84,7 @@ defmodule MapReduce do
       {:job_done} -> nil
     end
 
-    IO.inspect("reduce end")
+    # IO.inspect("reduce end")
 
     GenServer.call(Bucket, :reset)
 

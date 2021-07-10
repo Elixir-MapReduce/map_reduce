@@ -14,15 +14,15 @@ defmodule Worker do
     {:ok, data} = Cache.lookup(:splits, name_in_cache)
     {:ok, mapper} = Cache.lookup(:lambdas, :map_lambda)
 
-    IO.puts("worker starting map")
+    # IO.puts("worker starting map")
 
     result =
       data
       |> mapper.()
 
-    number_of_partitions = 8
+    number_of_partitions = 28
 
-    IO.puts("worker done with map")
+    # IO.puts("worker done with map")
 
     result
     |> Stream.chunk_every(500_000)
@@ -37,7 +37,7 @@ defmodule Worker do
     end)
     |> Stream.run()
 
-    IO.puts("worker saved map result in bucket")
+    # IO.puts("worker saved map result in bucket")
 
     send(master, {:job_done, nil, self()})
 
@@ -45,18 +45,18 @@ defmodule Worker do
   end
 
   def handle_cast({:reduce, name_in_cache}, %{master: master} = state) do
-    IO.puts("reducer called")
+    # IO.puts("reducer called")
     {buffer, storage} = GenServer.call(Bucket, {:get, name_in_cache}, 1_000_000_000)
     {:ok, reducer} = Cache.lookup(:lambdas, :reduce_lambda)
 
-    IO.puts("reducer received bucket information")
+    # IO.puts("reducer received bucket information")
 
-    IO.puts("concating buffer and storage")
+    # IO.puts("concating buffer and storage")
     data = Enum.concat(storage, List.flatten(buffer))
-    IO.puts("concat finished")
+    # IO.puts("concat finished")
 
     if Enum.empty?(data) == false do
-      IO.puts("starting to execute reduce function")
+      # IO.puts("starting to execute reduce function")
 
       data =
         data
@@ -74,7 +74,7 @@ defmodule Worker do
         end)
         |> Enum.to_list()
 
-      IO.puts("finished executing reduce function")
+      # IO.puts("finished executing reduce function")
 
       file_path = "results/" <> (name_in_cache |> Integer.to_string()) <> ".txt"
 
@@ -83,7 +83,7 @@ defmodule Worker do
       |> Stream.into(File.stream!(file_path, [:write]))
       |> Stream.run()
 
-      IO.puts("finished writing reduce to file")
+      # IO.puts("finished writing reduce to file")
     end
 
     send(master, {:job_done, nil, self()})
