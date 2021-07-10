@@ -49,7 +49,7 @@ defmodule Master do
         %{remaining_jobs: remaining_jobs, queue: queue, worker_pool: pool, caller: caller} = state
       ) do
     if remaining_jobs == 1 do
-      IO.puts("job done signal received in master")
+      # IO.puts("job done signal received in master")
       send(caller, {:job_done})
     end
 
