@@ -13,7 +13,6 @@ A **distributed, fault-tolerant MapReduce framework** implemented in Elixir that
 - **⚖️ Load Balancing**: Intelligent hash-based work distribution ensures even load across workers
 - **📈 Scalable**: Supports processing of large datasets by chunking and parallel execution
 - **🔍 Real-time Monitoring**: Heartbeat monitoring system detects network congestion and worker failures
-- **🏗️ Production Ready**: Includes comprehensive test coverage (98%+) and CI/CD pipeline
 
 ## 🏛️ Architecture
 
